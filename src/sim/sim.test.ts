@@ -123,6 +123,19 @@ describe('simulate', () => {
     expect(r.bossDamageBy['Rain of Fire']).toBeCloseTo(per * 3, 0)
   })
 
+  it('Royal Edict buffs tower damage and range and is credited with the extra', () => {
+    const edict = spellById('royal-edict')!
+    expect(edict.selectable, edict.issues.join('; ')).toBe(true)
+    const placements = [{ spotId: '1', tower: archers, tier: 3 as const, skills: [] as string[] }]
+    const without = simulate(base({ map: NEAR_MAP, build: { ...empty, placements } }))
+    const withEdict = simulate(base({ map: NEAR_MAP, build: { ...empty, placements, spells: [edict] } }))
+    const sum = (r: typeof without) => Object.values(r.bossDamageBy).reduce((a, b) => a + b, 0)
+    expect(sum(withEdict)).toBeGreaterThan(sum(without) * 1.1)
+    expect(withEdict.bossDamageBy['Royal Edict']).toBeGreaterThan(0)
+    // only the buff adds damage: tower's own share stays the same
+    expect(withEdict.bossDamageBy['Royal Archers (spot 1)']).toBeCloseTo(without.bossDamageBy['Royal Archers (spot 1)'], -2)
+  })
+
   it('a hero with an area skill damages the boss', () => {
     const h = heroById('king-malik')!
     expect(h.selectable).toBe(true)

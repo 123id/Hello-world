@@ -55,11 +55,12 @@ export interface HeroDef {
 
 export interface SpellDef {
   id: string; name: string; rarity: string | null
-  kind: 'strike' | 'zone' | 'other'
+  kind: 'strike' | 'zone' | 'buff' | 'other'
   cooldown: number
   aoe: number
   hits: number; dmgMin: number; dmgMax: number // strike
-  dpsAvg: number; duration: number; slowPct: number // zone
+  dpsAvg: number; duration: number; slowPct: number // zone (duration also used by buff)
+  buffDmgPct: number; buffRangePct: number; buffTowers: number // buff (Royal Edict)
   perks: PerkDef[]
   issues: string[]; selectable: boolean
 }
@@ -170,10 +171,12 @@ function buildSpells(): SpellDef[] {
     const dmin = num(c.damageMin), dmax = num(c.damageMax), pmin = num(c.dpsMin), pmax = num(c.dpsMax), dur = num(c.durationSec)
     if (c.kind === 'spellDamage' && dmin !== null && dmax !== null && cd) kind = 'strike'
     else if (c.kind === 'spellDamage' && pmin !== null && pmax !== null && dur && cd) kind = 'zone'
+    else if (c.kind === 'spellBuff' && num(c.buffDamagePct) !== null && dur && cd) kind = 'buff'
     else issues.push(c.kind === 'spellDamage' ? 'damage or duration missing in library' : `${c.kind ?? 'unknown'} spell not simulated yet`)
     return {
       id: c.id, name: c.name, rarity: c.rarity ?? null, kind, cooldown: cd ?? 0, aoe: num(c.aoe) ?? 80,
       hits: num(c.hits) ?? 1, dmgMin: dmin ?? 0, dmgMax: dmax ?? 0,
+      buffDmgPct: num(c.buffDamagePct) ?? 0, buffRangePct: num(c.buffRangePct) ?? 0, buffTowers: num(c.affectedTowers) ?? 4,
       dpsAvg: pmin !== null && pmax !== null ? avg(pmin, pmax) : 0, duration: dur ?? 0, slowPct: num(c.slowPct) ?? 0,
       perks: perksOf(c), issues, selectable: issues.length === 0,
     }
