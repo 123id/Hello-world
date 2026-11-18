@@ -13,4 +13,5 @@ button { background: #3b6fd4; color: white; border: 0; border-radius: 6px; paddi
 table { width: 100%; border-collapse: collapse; font-size: .85rem; }
 td { padding: 2px 4px; border-bottom: 1px solid #2d323b; }
 td:last-child { text-align: right; }
+td:not(:first-child) { text-align: right; }
 svg { width: 100%; height: auto; display: block; background: #0f1114; border-radius: 6px; }

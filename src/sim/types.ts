@@ -12,6 +12,24 @@ export interface MapDef {
   image?: string // optional background image URL (put file in /public)
   path: Pt[] // boss walks this polyline start -> finish line
   spots: { id: string; x: number; y: number }[] // tower build spots
+  routes?: RouteDef[] // every enemy route (display only for now)
+}
+
+export interface RouteDef {
+  id: string
+  name: string
+  color: string
+  points: Pt[]
+  tiles: number // length in tiles
+  verified: boolean // length confirmed against krb-deck's route list
+}
+
+export interface CreepSpawn {
+  name: string
+  count: number
+  firstSec: number // first spawn time (s). The full spawn schedule is NOT known yet.
+  hp: number
+  flying?: boolean
 }
 
 export interface BossDef {

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react'
-import { BOSS, HEROES, MAP, SPELLS, TOWERS } from './data/placeholder'
+import { HEROES, SPELLS, TOWERS } from './data/placeholder'
+import { BOSS_ENTERS_SEC, BOSS_KW as BOSS, CREEP_SETS, MAP_KW as MAP } from './data/kingdomwars'
 import { dpsAt } from './sim/explorer'
 import { buildPath, pointAt } from './sim/geometry'
 import { simulate } from './sim/engine'
@@ -15,7 +16,8 @@ export function App() {
     rally: Object.fromEntries(MAP.spots.map((s) => [s.id, 0])),
     heroS: 300,
   })
-  const [bossS, setBossS] = useState(200)
+  const [bossS, setBossS] = useState(700)
+  const [creepSet, setCreepSet] = useState<'A' | 'B'>('A')
 
   const deckTowers = useMemo(
     () => TOWERS.filter((t) => Object.values(layout.spots).includes(t.id)), [layout.spots])
@@ -42,21 +44,25 @@ export function App() {
       <div>
         <h1>KR Battles — Boss Kill Calculator</h1>
         <div className="warn">
-          All card, boss and map numbers are PLACEHOLDERS. Results are meaningless until real data is loaded.
+          Map and creep tables are real (from krb-deck screenshots). Tower, hero and spell numbers here are still
+          PLACEHOLDERS, and creeps are not simulated yet, so results are meaningless until the real library is wired in.
         </div>
         <h2>Map</h2>
         <div className="panel">
-          <svg viewBox={`0 0 ${MAP.width} ${MAP.height}`}>
+          <svg viewBox={`0 0 ${MAP.width} ${MAP.height}`} style={{ maxWidth: 440, margin: '0 auto' }}>
             {MAP.image && <image href={MAP.image} width={MAP.width} height={MAP.height} />}
-            <polyline points={MAP.path.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke="#6b5b3a" strokeWidth="14" strokeLinejoin="round" />
+            {(MAP.routes ?? []).map((r) => (
+              <polyline key={r.id} points={r.points.map((p) => `${p.x},${p.y}`).join(' ')} fill="none" stroke={r.color}
+                strokeWidth={r.id === 'r1' ? 7 : 3} strokeDasharray={r.id === 'r1' ? undefined : '10 7'} strokeLinejoin="round" opacity={r.id === 'r1' ? 0.9 : 0.7} />
+            ))}
             {MAP.spots.map((sp) => {
               const c = cards[layout.spots[sp.id] ?? '']
               const r = c?.kind === 'shooter' ? c.range : c?.range
               return (
                 <g key={sp.id}>
                   {c && <circle cx={sp.x} cy={sp.y} r={r} fill="rgba(80,160,255,.08)" stroke="rgba(80,160,255,.4)" />}
-                  <circle cx={sp.x} cy={sp.y} r={9} fill={c ? '#3b6fd4' : '#444'} />
-                  <text x={sp.x} y={sp.y - 13} fontSize="11" fill="#ccc" textAnchor="middle">{sp.id}{c ? `: ${c.name}` : ''}</text>
+                  <circle cx={sp.x} cy={sp.y} r={13} fill={c ? '#3b6fd4' : '#444'} />
+                  <text x={sp.x} y={sp.y + 5} fontSize="15" fill="#fff" textAnchor="middle" fontWeight="bold">{sp.id}</text>
                   {c?.kind === 'barracks' && (() => { const rp = pointAt(path, layout.rally[sp.id] ?? 0); return <circle cx={rp.x} cy={rp.y} r={6} fill="#4ac36b" /> })()}
                 </g>
               )
@@ -64,6 +70,19 @@ export function App() {
             {(() => { const hp = pointAt(path, layout.heroS); return <circle cx={hp.x} cy={hp.y} r={7} fill="#e5b93c" /> })()}
             <circle cx={bp.x} cy={bp.y} r={10} fill="#d84a4a" />
           </svg>
+        </div>
+
+        <h2>Enemy wave (who enters)</h2>
+        <div className="panel">
+          <label>Wave set
+            <select value={creepSet} onChange={(e) => setCreepSet(e.target.value as 'A' | 'B')}>
+              <option value="A">Set A</option><option value="B">Set B</option>
+            </select>
+          </label>
+          <div style={{ fontSize: '.8rem', color: '#9aa', margin: '4px 0' }}>Boss enters at {BOSS_ENTERS_SEC}s. Spawn schedule, creep speed and armor are not loaded yet.</div>
+          <table><tbody>
+            {CREEP_SETS[creepSet].map((c) => <tr key={c.name}><td>{c.name}{c.flying ? ' (flying)' : ''}</td><td>×{c.count}</td><td>from {c.firstSec}s</td><td>{c.hp} HP</td></tr>)}
+          </tbody></table>
         </div>
 
         <h2>Path explorer — boss DPS taken along the path</h2>
