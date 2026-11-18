@@ -4,14 +4,15 @@ import type { PerkDef } from '../sim/library'
 import type { Mods } from '../sim/perks'
 import { FIGHT_SECONDS, type SimResult } from '../sim/types'
 import { Chart } from './common'
-import { fmt, PATH } from './state'
+import { ClassIcon, type DmgClass } from './icons'
+import { classOfSource, fmt, PATH } from './state'
 
 interface Props {
-  result: SimResult; onField: number; mods: Mods; perks: PerkDef[]
+  result: SimResult; onField: number; mods: Mods; perks: PerkDef[]; classByName: Record<string, DmgClass>
   explorer: { s: number; dps: number }[]; exploreS: number; setExploreS: (n: number) => void; exploreInfo: string
 }
 
-export function Results({ result, onField, mods, perks, explorer, exploreS, setExploreS, exploreInfo }: Props) {
+export function Results({ result, onField, mods, perks, classByName, explorer, exploreS, setExploreS, exploreInfo }: Props) {
   const [open, setOpen] = useState(false)
   const total = Object.values(result.bossDamageBy).reduce((a, b) => a + b, 0)
   const headline = result.killTime !== null ? `Boss killed at ${result.killTime.toFixed(1)} s`
@@ -32,7 +33,7 @@ export function Results({ result, onField, mods, perks, explorer, exploreS, setE
         <h2>Damage by source</h2>
         <table className="tbl"><tbody>
           {Object.entries(result.bossDamageBy).sort((a, b) => b[1] - a[1]).map(([k, v]) => (
-            <tr key={k}><td>{k}</td><td>{fmt(v / Math.max(0.1, onField))}/s</td><td>{((v / Math.max(1, total)) * 100).toFixed(1)}%</td></tr>
+            <tr key={k}><td><span className="srcname">{(() => { const c = classOfSource(k, classByName); return c ? <ClassIcon cls={c} size={14} /> : <span style={{ width: 14 }} /> })()}{k}</span></td><td>{fmt(v / Math.max(0.1, onField))}/s</td><td>{((v / Math.max(1, total)) * 100).toFixed(1)}%</td></tr>
           ))}
           {total === 0 && <tr><td>nothing hit the boss</td></tr>}
         </tbody></table>

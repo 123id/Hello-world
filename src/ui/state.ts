@@ -5,6 +5,7 @@ import { buildPath, dist, pointAt } from '../sim/geometry'
 import { LIBRARY, type Tier, type TowerDef } from '../sim/library'
 import type { CardKind } from '../data/icons'
 import type { Pt } from '../sim/types'
+import type { DmgClass } from './icons'
 
 export const MAP = MAP_KW
 export const PATH = buildPath(MAP.path)
@@ -81,4 +82,32 @@ export function sourceDps(by: Record<string, number>, name: string, secs: number
   let sum = 0
   for (const [k, v] of Object.entries(by)) if (k === name || k.startsWith(name + ' (') || k.startsWith(name + ' ·')) sum += v
   return sum / Math.max(0.1, secs)
+}
+
+// ---- damage classes (icons: sword / arrow / blast / dynamite) -------------------------------
+export const classOfTower = (t: TowerDef): DmgClass => (t.kind === 'barracks' ? ((t.tiers[3]?.range ?? 0) > 0 ? 'ranged' : 'melee') : t.cls === 'magic' ? 'magic' : t.cls === 'artillery' ? 'artillery' : 'ranged')
+export const classOfHero = (h: { ranged: boolean }): DmgClass => (h.ranged ? 'ranged' : 'melee')
+
+/** Source labels the engine writes look like "Name", "Name (spot 7)" or "Name · Skill": map the name part to a class. */
+export function classOfSource(label: string, byName: Record<string, DmgClass>): DmgClass | null {
+  const name = label.split(' (')[0].split(' · ')[0]
+  return byName[name] ?? null
+}
+
+/** Keep a rally point inside the ring around its tower. */
+export function clampRally(spot: Pt, p: Pt): Pt {
+  const d = dist(p, spot)
+  return d <= RALLY_RANGE ? p : { x: spot.x + ((p.x - spot.x) * RALLY_RANGE) / d, y: spot.y + ((p.y - spot.y) * RALLY_RANGE) / d }
+}
+
+/** Share of the boss route (by length) within `range` of a point. */
+export function routeCoverage(pos: Pt, range: number): number {
+  let inside = 0, total = 0
+  for (let s = 0; s <= PATH.length; s += 10) { total++; if (dist(pointAt(PATH, s), pos) <= range) inside++ }
+  return inside / Math.max(1, total)
+}
+export function bestCoverage(range: number): { spotId: string; frac: number } {
+  let best = { spotId: MAP.spots[0].id, frac: -1 }
+  for (const sp of MAP.spots) { const f = routeCoverage(sp, range); if (f > best.frac) best = { spotId: sp.id, frac: f } }
+  return best
 }

@@ -9,12 +9,15 @@ import { pointAt } from './sim/geometry'
 import type { Pt } from './sim/types'
 import { BattleStep } from './ui/BattleStep'
 import { Picker } from './ui/common'
+import { Gold } from './ui/icons'
+import { Inspect } from './ui/Inspect'
 import { DeckStep, type Pill, type TierRow } from './ui/DeckStep'
 import { Results } from './ui/Results'
 import {
-  DEFAULT_DECK, MAP, PATH, autoPlace, emptySpots, fmt, goldOf, loadDecks, nearestOnRoute, sanitize, saveDecks, sourceDps, withTier,
+  DEFAULT_DECK, MAP, PATH, autoPlace, classOfHero, classOfTower, emptySpots, fmt, goldOf, loadDecks, nearestOnRoute, sanitize, saveDecks, sourceDps, withTier,
   type DeckSave, type Placing, type Spot, type Spots,
 } from './ui/state'
+import type { DmgClass } from './ui/icons'
 
 const killSecs = (r: { killTime: number | null }) => (r.killTime !== null ? r.killTime - BOSS_ENTERS_SEC : null)
 
@@ -30,6 +33,7 @@ export function App() {
   const [creepSet, setCreepSet] = useState<'A' | 'B'>('A')
   const [step, setStep] = useState<'deck' | 'battle'>('deck')
   const [picking, setPicking] = useState<{ kind: CardKind; index: number } | null>(null)
+  const [inspect, setInspect] = useState<{ kind: CardKind; index: number } | null>(null)
   const [selected, setSelected] = useState<string | null>(null)
   const [placing, setPlacing] = useState<Placing>(null)
   const [scrub, setScrub] = useState(0)
@@ -57,6 +61,14 @@ export function App() {
     setPicking(null)
   }
   const setSpot = (id: string, patch: Partial<Spot>) => setSpots((s) => ({ ...s, [id]: { ...s[id], ...patch } }))
+  /** Move a tower to another stump; if that stump is taken the two towers swap. */
+  const moveTower = (from: string, to: string) => setSpots((s) => ({ ...s, [from]: { ...s[to], rally: undefined }, [to]: { ...s[from], rally: undefined } }))
+  const swapCards = (kind: 'spells' | 'towers', from: number, to: number) => {
+    const d: DeckSave = { heroId, spellIds: [...spellIds], deckIds: [...deckIds] }
+    const list = kind === 'spells' ? d.spellIds : d.deckIds
+    ;[list[from], list[to]] = [list[to], list[from]]
+    applyDeck(d, slot, true) // spots refer to towers by id, so the build stays as it is
+  }
 
   const placements: Placement[] = useMemo(() => MAP.spots.flatMap((sp) => {
     const st = spots[sp.id]
@@ -93,17 +105,22 @@ export function App() {
   // per-card contribution pills
   const placedNames = new Set(placements.map((p) => p.tower.name))
   const pillFor = (kind: CardKind, id: string): Pill => {
-    if (kind === 'heroes') { const h = heroById(id); return { text: `${fmt(sourceDps(result.bossDamageBy, h?.name ?? '', onField))} DPS`, tone: 'good' } }
+    if (kind === 'heroes') { const h = heroById(id); return { text: `${fmt(sourceDps(result.bossDamageBy, h?.name ?? '', onField))} DPS`, tone: 'good', cls: h ? classOfHero(h) : null } }
     if (kind === 'spells') {
       const s = spellById(id)
       if (!s || !s.selectable) return { text: 'OFF', tone: 'off' }
       const v = sourceDps(result.bossDamageBy, s.name, onField)
-      return s.kind === 'buff' ? { text: `+${fmt(v)}`, tone: 'good' } : { text: `${fmt(v)} DPS`, tone: 'good' }
+      return s.kind === 'buff' ? { text: `+${fmt(v)}`, tone: 'good' } : { text: `${fmt(v)} DPS`, tone: 'good', cls: 'magic' }
     }
     const t = towerById(id)
     if (!t || !placedNames.has(t.name)) return { text: 'NOT PLACED', tone: 'warn' }
-    return { text: `${fmt(sourceDps(result.bossDamageBy, t.name, onField))} DPS`, tone: 'good' }
+    return { text: `${fmt(sourceDps(result.bossDamageBy, t.name, onField))} DPS`, tone: 'good', cls: classOfTower(t) }
   }
+
+  const classByName: Record<string, DmgClass> = {}
+  if (hero) classByName[hero.name] = classOfHero(hero)
+  for (const sp of spells) if (sp.kind !== 'buff') classByName[sp.name] = 'magic'
+  for (const t of deckTowers) classByName[t.name] = classOfTower(t)
 
   const explorer = useMemo(() => {
     const pts = []
@@ -119,7 +136,7 @@ export function App() {
       <header className="stats">
         <div><b>{fmt(dps)}</b><span>DPS</span></div>
         <div><b>{fmt(dps * 60)}</b><span>DAMAGE / MIN</span></div>
-        <div><b>{fmt(gold)}g{unknown ? '+' : ''}</b><span>GOLD</span></div>
+        <div><b><Gold n={gold} plus={unknown > 0} size={20} /></b><span>GOLD</span></div>
         <div><b>{kill !== null ? `${kill.toFixed(1)} s` : '—'}</b><span>{kill !== null ? 'BOSS KILL' : 'NOT KILLED'}</span></div>
       </header>
 
@@ -137,7 +154,7 @@ export function App() {
             slot={slot} onSlot={switchSlot} onReset={() => applyDeck(DEFAULT_DECK, slot)}
             heroId={heroId} spellIds={spellIds} deckIds={deckIds}
             pills={{ hero: pillFor('heroes', heroId), spells: spellIds.map((id) => pillFor('spells', id)), towers: deckIds.map((id) => pillFor('towers', id)) }}
-            onPick={(kind, index) => setPicking({ kind, index })}
+            onInspect={(kind, index) => setInspect({ kind, index })} onSwap={swapCards}
             tiers={tierRows} activeTier={activeTier} onTier={setAllTiers}
             creepSet={creepSet} setCreepSet={setCreepSet} hasTowers={placements.length > 0} goBattle={() => setStep('battle')}
           />
@@ -147,19 +164,27 @@ export function App() {
               hero={hero} heroPos={heroPos} spots={spots} placements={placements} deckTowers={deckTowers} mods={mods}
               bossS={scrubPoint?.bossS ?? null}
               selected={selected} setSelected={setSelected} placing={placing} setPlacing={setPlacing}
-              setHeroPos={setHeroPos} setSpot={setSpot}
+              setHeroPos={setHeroPos} setSpot={setSpot} moveTower={moveTower}
               onAutoPlace={() => setSpots(autoPlace(deckTowers))} onClear={() => setSpots(emptySpots())}
               scrub={scrub} setScrub={setScrub} maxScrub={result.timeline.at(-1)?.t ?? 1}
               routes={routes} setRoutes={setRoutes}
             />
             <Results
-              result={result} onField={onField} mods={mods} perks={perkLists}
+              result={result} onField={onField} mods={mods} perks={perkLists} classByName={classByName}
               explorer={explorer} exploreS={exploreS} setExploreS={setExploreS}
               exploreInfo={`Boss at ${Math.round(exploreS)} / ${Math.round(PATH.length)}: ${fmt(here.dps)} DPS from ${here.shooters} shooter(s)${here.blocked ? ', blocked by barracks' : ''}`}
             />
           </>
         )}
       </main>
+
+      {inspect && (() => {
+        const id = inspect.kind === 'heroes' ? heroId : inspect.kind === 'spells' ? spellIds[inspect.index] : deckIds[inspect.index]
+        const name = (inspect.kind === 'heroes' ? heroById(id) : inspect.kind === 'spells' ? spellById(id) : towerById(id))?.name ?? ''
+        const cardDps = sourceDps(result.bossDamageBy, name, onField)
+        return <Inspect kind={inspect.kind} id={id} dps={cardDps} share={total > 0 ? (cardDps * onField) / total : 0} placements={placements} spots={spots}
+          onChange={() => { setPicking(inspect); setInspect(null) }} onClose={() => setInspect(null)} />
+      })()}
 
       {picking && <Picker kind={picking.kind} current={picking.kind === 'heroes' ? heroId : picking.kind === 'spells' ? spellIds[picking.index] : deckIds[picking.index]} onPick={pickCard} onClose={() => setPicking(null)} />}
     </div>

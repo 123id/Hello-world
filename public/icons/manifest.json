@@ -233,12 +233,6 @@
   "h": 158,
   "shape": "rect"
  },
- "heroes:wrath-of-blackburn": {
-  "file": "icons/heroes-wrath-of-blackburn.png",
-  "w": 166,
-  "h": 182,
-  "shape": "hex"
- },
  "heroes:magnus-spellbane": {
   "file": "icons/heroes-magnus-spellbane.png",
   "w": 240,
@@ -255,6 +249,12 @@
   "file": "icons/spells-polymorph.png",
   "w": 265,
   "h": 290,
+  "shape": "hex"
+ },
+ "spells:wrath-of-blackburn": {
+  "file": "icons/spells-wrath-of-blackburn.png",
+  "w": 166,
+  "h": 182,
   "shape": "hex"
  }
 }
