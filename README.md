@@ -18,5 +18,5 @@ place the hero and barracks rally points, and see boss kill time and DPS.
 ## What is assumed (not in the data)
 Creep speed/damage/route split · creep spawn spacing (evenly from first appearance until 215 s, fitted to krb-deck counts) ·
 1 tile = 80 range units · each unit/hero blocks one ground enemy · barracks unit respawn 10 s · hero skill reach 200 ·
-all purchases happen at t=0 (gold is shown, not enforced) · damage = average of min/max, no crits, no armor.
+hero skill damage is per cast (confirmed by the owner) · all purchases happen at t=0 (gold is shown, not enforced) · damage = average of min/max, no crits, no armor.
 Cards with incomplete library data are listed in the UI as "not simulatable yet"; skills the engine can't model are flagged per build.

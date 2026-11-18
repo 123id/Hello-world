@@ -36,27 +36,60 @@ function Chart({ data, h = 90, color, bars }: { data: { x: number; y: number }[]
   )
 }
 
-function CardSelect<T extends { id: string; name: string; selectable: boolean; issues: string[] }>(
-  { value, onChange, list, empty, kind }: { value: string; onChange: (id: string) => void; list: T[]; empty?: string; kind: CardKind },
-) {
+type Listed = { id: string; name: string; selectable: boolean; issues: string[] }
+const listOf = (k: CardKind): Listed[] => (k === 'heroes' ? LIBRARY.heroes : k === 'spells' ? LIBRARY.spells : LIBRARY.towers)
+
+function Tile({ kind, id, label, onClick }: { kind: CardKind; id: string; label: string; onClick: () => void }) {
+  const c = listOf(kind).find((x) => x.id === id)
   return (
-    <div className="pick">
-      <Icon kind={kind} id={value} size={36} />
-      <select value={value} onChange={(e) => onChange(e.target.value)}>
-      {empty !== undefined && <option value="">{empty}</option>}
-      {list.filter((c) => c.selectable).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
-      <optgroup label="Not simulatable yet (data missing)">
-        {list.filter((c) => !c.selectable).map((c) => <option key={c.id} value={c.id} disabled>{c.name}: {[...new Set(c.issues)][0]}</option>)}
-      </optgroup>
-      </select>
+    <button className="tile" onClick={onClick} title={`Change ${label}`}>
+      <Icon kind={kind} id={id} size={58} />
+      <span>{c?.name ?? id}</span>
+    </button>
+  )
+}
+
+function Picker({ kind, current, onPick, onClose }: { kind: CardKind; current: string; onPick: (id: string) => void; onClose: () => void }) {
+  const list = [...listOf(kind)].sort((a, b) => Number(b.selectable) - Number(a.selectable) || a.name.localeCompare(b.name))
+  return (
+    <div className="overlay" onClick={onClose}>
+      <div className="picker" onClick={(e) => e.stopPropagation()}>
+        <div className="row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
+          <b>Choose {kind === 'heroes' ? 'a hero' : kind === 'spells' ? 'a spell' : 'a tower'}</b>
+          <button className="mini" onClick={onClose}>close</button>
+        </div>
+        <div style={{ fontSize: '.75rem', color: '#9aa', marginTop: 4 }}>Greyed-out cards are missing data the simulator needs (hover for the reason).</div>
+        <div className="pgrid">
+          {list.map((c) => (
+            <button key={c.id} className={'tile' + (c.id === current ? ' sel' : '')} disabled={!c.selectable} onClick={() => onPick(c.id)}
+              title={c.selectable ? c.name : `Not simulatable yet: ${[...new Set(c.issues)].join('; ')}`}>
+              <Icon kind={kind} id={c.id} size={52} />
+              <span>{c.name}</span>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   )
 }
 
+interface DeckSave { heroId: string; spellIds: string[]; deckIds: string[] }
+const DEFAULT_DECK: DeckSave = { heroId: 'king-malik', spellIds: ['rain-of-fire', 'thunderbolt', 'cursed-vines'], deckIds: ['royal-archers', 'mage-tower', 'twilight-longbow', 'rocket-gunners'] }
+const usable = (k: CardKind, id: string) => !!listOf(k).find((c) => c.id === id && c.selectable)
+const sanitize = (d: DeckSave | undefined): DeckSave => (
+  d && usable('heroes', d.heroId) && d.spellIds?.length === 3 && d.spellIds.every((x) => usable('spells', x)) && d.deckIds?.length === 4 && d.deckIds.every((x) => usable('towers', x)) ? d : DEFAULT_DECK
+)
+const loadDecks = (): Record<number, DeckSave> => { try { return JSON.parse(localStorage.getItem('krb-decks') ?? '{}') } catch { return {} } }
+const saveDecks = (d: Record<number, DeckSave>) => { try { localStorage.setItem('krb-decks', JSON.stringify(d)) } catch { /* private mode etc. */ } }
+
 export function App() {
-  const [heroId, setHeroId] = useState('king-malik')
-  const [spellIds, setSpellIds] = useState(['rain-of-fire', 'thunderbolt', 'cursed-vines'])
-  const [deckIds, setDeckIds] = useState(['royal-archers', 'mage-tower', 'twilight-longbow', 'rocket-gunners'])
+  const [decks, setDecks] = useState<Record<number, DeckSave>>(loadDecks)
+  const [slot, setSlot] = useState(1)
+  const first = sanitize(decks[1])
+  const [heroId, setHeroId] = useState(first.heroId)
+  const [spellIds, setSpellIds] = useState(first.spellIds)
+  const [deckIds, setDeckIds] = useState(first.deckIds)
+  const [picking, setPicking] = useState<{ kind: CardKind; index: number } | null>(null)
   const [heroPos, setHeroPos] = useState<Pt>(() => pointAt(path, 1500))
   const [spots, setSpots] = useState<Record<string, Spot>>(() => {
     const s: Record<string, Spot> = Object.fromEntries(MAP.spots.map((p) => [p.id, emptySpot()]))
@@ -70,6 +103,20 @@ export function App() {
   const [placing, setPlacing] = useState<string | null>(null) // 'hero' or a spot id (rally)
   const [scrub, setScrub] = useState(0)
   const [exploreS, setExploreS] = useState(1000)
+
+  const applyDeck = (d: DeckSave, n: number) => {
+    setHeroId(d.heroId); setSpellIds(d.spellIds); setDeckIds(d.deckIds)
+    setDecks((all) => { const next = { ...all, [n]: d }; saveDecks(next); return next })
+  }
+  const switchSlot = (n: number) => { setSlot(n); applyDeck(sanitize(decks[n]), n) }
+  const pickCard = (id: string) => {
+    if (!picking) return
+    const d: DeckSave = { heroId, spellIds: [...spellIds], deckIds: [...deckIds] }
+    if (picking.kind === 'heroes') d.heroId = id
+    else if (picking.kind === 'spells') d.spellIds[picking.index] = id
+    else d.deckIds[picking.index] = id
+    applyDeck(d, slot); setPicking(null)
+  }
 
   const hero = heroById(heroId) ?? null
   const spells = spellIds.map((id) => spellById(id)).filter((s): s is NonNullable<typeof s> => !!s)
@@ -210,18 +257,17 @@ export function App() {
       <div>
         <div className="panel">
           <h2 style={{ marginTop: 0 }}>Deck</h2>
-          <label>Hero <button className="mini" onClick={() => setPlacing(placing === 'hero' ? null : 'hero')}>{placing === 'hero' ? 'cancel' : 'place on map'}</button></label>
-          <CardSelect kind="heroes" value={heroId} onChange={setHeroId} list={LIBRARY.heroes} />
-          {[0, 1, 2].map((i) => (
-            <div key={i}><label>Spell {i + 1}</label>
-              <CardSelect kind="spells" value={spellIds[i]} onChange={(id) => setSpellIds((s) => s.map((x, j) => (j === i ? id : x)))} list={LIBRARY.spells} />
-            </div>
-          ))}
-          {[0, 1, 2, 3].map((i) => (
-            <div key={i}><label>Tower {i + 1}</label>
-              <CardSelect kind="towers" value={deckIds[i]} onChange={(id) => setDeckIds((s) => s.map((x, j) => (j === i ? id : x)))} list={LIBRARY.towers} />
-            </div>
-          ))}
+          <div className="row" style={{ alignItems: 'center', marginBottom: 8 }}>
+            {[1, 2, 3, 4, 5].map((n) => <button key={n} className={'mini' + (slot === n ? ' on' : '')} onClick={() => switchSlot(n)}>{n}</button>)}
+            <span style={{ fontSize: '.72rem', color: '#9aa' }}>deck slot (saved in this browser)</span>
+          </div>
+          <div className="deckgrid">
+            <Tile kind="heroes" id={heroId} label="hero" onClick={() => setPicking({ kind: 'heroes', index: 0 })} />
+            {spellIds.map((id, i) => <Tile key={'s' + i} kind="spells" id={id} label={`spell ${i + 1}`} onClick={() => setPicking({ kind: 'spells', index: i })} />)}
+            {deckIds.map((id, i) => <Tile key={'t' + i} kind="towers" id={id} label={`tower ${i + 1}`} onClick={() => setPicking({ kind: 'towers', index: i })} />)}
+          </div>
+          <div className="row"><button className="mini" onClick={() => setPlacing(placing === 'hero' ? null : 'hero')}>{placing === 'hero' ? 'cancel' : 'place hero on map'}</button></div>
+          {picking && <Picker kind={picking.kind} current={picking.kind === 'heroes' ? heroId : picking.kind === 'spells' ? spellIds[picking.index] : deckIds[picking.index]} onPick={pickCard} onClose={() => setPicking(null)} />}
           <label>Wave set</label>
           <select value={creepSet} onChange={(e) => setCreepSet(e.target.value as 'A' | 'B')}><option value="A">Set A</option><option value="B">Set B</option></select>
         </div>
