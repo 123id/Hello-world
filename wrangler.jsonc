@@ -1,7 +1,7 @@
 {
   // Static site: `npm run build` produces ./dist, Cloudflare serves it as static assets.
   // "name" must match the project name in the Cloudflare dashboard.
-  "name": "hello-world",
+  "name": "kr-boss-simulator",
   "compatibility_date": "2025-09-01",
   "assets": {
     "directory": "./dist",
