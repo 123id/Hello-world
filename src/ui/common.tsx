@@ -1,6 +1,9 @@
 import type { ReactNode } from 'react'
+import type React from 'react'
 import { iconUrl, type CardKind } from '../data/icons'
 import { FIGHT_SECONDS } from '../sim/types'
+import type { useLongPressDrag } from './drag'
+import { ClassIcon, type DmgClass } from './icons'
 import { listOf, type Listed } from './state'
 
 export function Icon({ kind, id, size = 32 }: { kind: CardKind; id: string; size?: number }) {
@@ -11,13 +14,17 @@ export function Icon({ kind, id, size = 32 }: { kind: CardKind; id: string; size
 }
 
 /** A deck card like in the game: big icon, name, and a small pill with its contribution. */
-export function Card({ kind, id, pill, tone, onClick, sel }: { kind: CardKind; id: string; pill?: string; tone?: 'good' | 'off' | 'warn'; onClick?: () => void; sel?: boolean }) {
+export function Card({ kind, id, pill, tone, cls, onClick, sel, drag, drop, dragging, over }: {
+  kind: CardKind; id: string; pill?: string; tone?: 'good' | 'off' | 'warn'; cls?: DmgClass | null; onClick?: () => void; sel?: boolean
+  drag?: ReturnType<typeof useLongPressDrag>; drop?: string; dragging?: boolean; over?: boolean
+}) {
   const c = listOf(kind).find((x) => x.id === id)
+  const handlers = drag ? { ...drag, onKeyDown: (e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onClick?.() } } } : { onClick }
   return (
-    <button className={'card' + (sel ? ' sel' : '')} onClick={onClick} title={c?.name}>
+    <button className={'card' + (sel ? ' sel' : '') + (dragging ? ' dragging' : '') + (over ? ' over' : '') + (drag ? ' draggable' : '')} data-drop={drop} title={c?.name} {...handlers}>
       <span className="cardimg"><Icon kind={kind} id={id} size={84} /></span>
       <span className="cardname">{c?.name ?? id}</span>
-      {pill !== undefined && <span className={'pill ' + (tone ?? '')}>{pill}</span>}
+      {pill !== undefined && <span className={'pill ' + (tone ?? '')}>{cls && <ClassIcon cls={cls} size={13} />}{pill}</span>}
     </button>
   )
 }

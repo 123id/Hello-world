@@ -3,6 +3,8 @@ import { simulate, buildSpawns, type Build, type SimInput } from './engine'
 import { LIBRARY, heroById, spellById, towerById } from './library'
 import { collectMods, emptyMods } from './perks'
 import { CREEP_SETS, MAP_KW, BOSS_KW, BOSS_ENTERS_SEC, TILE } from '../data/kingdomwars'
+import { bestCoverage, classOfSource, classOfTower, classOfHero, clampRally, routeCoverage, MAP } from '../ui/state'
+import { RALLY_RANGE } from './engine'
 import type { BossDef, CreepSpawn, MapDef } from './types'
 
 // A straight test map: route runs along y=0, one spot 100 units above the middle.
@@ -152,5 +154,38 @@ describe('simulate', () => {
     const r = simulate(base({ build, mods: collectMods([h.perks]) }))
     const heroDmg = Object.entries(r.bossDamageBy).filter(([k]) => k.startsWith('King Malik')).reduce((a, [, v]) => a + v, 0)
     expect(heroDmg).toBeGreaterThan(0)
+  })
+})
+
+describe('damage classes and coverage (UI helpers)', () => {
+  it('maps cards to sword / arrow / blast / dynamite', () => {
+    expect(classOfTower(towerById('royal-archers')!)).toBe('ranged')
+    expect(classOfTower(towerById('mage-tower')!)).toBe('magic')
+    expect(classOfTower(towerById('dwarven-artillery')!)).toBe('artillery')
+    expect(classOfTower(towerById('tesla-x104')!)).toBe('artillery')
+    expect(classOfTower(towerById('rocket-gunners')!)).toBe('ranged') // barracks whose units shoot
+    expect(classOfTower(towerById('crimson-manor')!)).toBe('melee')    // barracks with melee units
+    expect(classOfHero(heroById('king-malik')!)).toBe('melee')
+    expect(classOfHero(heroById('vesper')!)).toBe('ranged')
+  })
+  it('finds the class of a damage-source label', () => {
+    const by = { 'Royal Archers': 'ranged', Alric: 'melee' } as const
+    expect(classOfSource('Royal Archers (spot 7)', by)).toBe('ranged')
+    expect(classOfSource('Alric · Spiked Flurry', by)).toBe('melee')
+    expect(classOfSource('Nobody', by)).toBeNull()
+  })
+  it('coverage is a share of the route and the best spot is at least as good as any other', () => {
+    const best = bestCoverage(160)
+    expect(best.frac).toBeGreaterThan(0)
+    expect(best.frac).toBeLessThanOrEqual(1)
+    for (const sp of MAP.spots) expect(routeCoverage(sp, 160)).toBeLessThanOrEqual(best.frac + 1e-9)
+    expect(routeCoverage(MAP.spots[0], 100000)).toBe(1)
+  })
+  it('rally points are clamped to the ring around their tower', () => {
+    const sp = MAP.spots[0]
+    const far = clampRally(sp, { x: sp.x + 5000, y: sp.y })
+    expect(Math.hypot(far.x - sp.x, far.y - sp.y)).toBeCloseTo(RALLY_RANGE, 5)
+    const near = { x: sp.x + 10, y: sp.y }
+    expect(clampRally(sp, near)).toEqual(near)
   })
 })
