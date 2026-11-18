@@ -95,3 +95,37 @@ label.chk { display: flex; gap: 8px; align-items: center; font-size: .85rem; mar
 .skillbits { display: flex; gap: 12px; flex-wrap: wrap; font-size: .78rem; color: var(--mut); margin-top: 3px; }
 .tag { font-size: .62rem; font-weight: 800; padding: 2px 7px; border-radius: 999px; background: #2c4f93; }
 .tag.ok { background: #1f6b3d; color: #cfffe0; } .tag.no { background: #5c3a1a; color: #ffd9a8; }
+
+.cardimg { position: relative; }
+.badge { position: absolute; top: -2px; right: 2px; min-width: 18px; height: 18px; border-radius: 999px; background: #1f6b3d; color: #fff; font-size: .7rem; font-weight: 900; display: flex; align-items: center; justify-content: center; border: 2px solid #0b1a3a; }
+.badge.warn { background: #c8741a; }
+.card.dim { opacity: .55; }
+.card.empty { justify-content: flex-start; }
+.card.empty .emptybox { width: 100%; max-width: 84px; aspect-ratio: 1; border: 3px dashed #5f8ad6; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: #7fa6ee; }
+.card.sel .emptybox { border-color: var(--gold); color: var(--gold); }
+.card.empty.over .emptybox, .card.over .cardimg { outline: 3px dashed var(--green); outline-offset: 2px; border-radius: 16px; }
+.tabs { display: flex; gap: 8px; margin: 4px 0 10px; }
+.tabs button { flex: 1; padding: 10px 4px; border-radius: 12px; border: 2px solid var(--line); background: #0f2a5c; font-weight: 900; font-size: .85rem; text-transform: uppercase; }
+.tabs button.on { background: #2b5cad; border-color: var(--gold); }
+.collection.over { outline: 3px dashed var(--green); outline-offset: 2px; border-radius: 20px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-bottom: 8px; }
+.toolbar select { background: #0f2a5c; color: inherit; border: 2px solid var(--line); border-radius: 10px; padding: 6px 8px; font: inherit; font-size: .8rem; }
+.checkrow { display: flex; align-items: center; gap: 8px; font-size: .85rem; margin-top: 10px; }
+.checkrow input { width: 20px; height: 20px; }
+.dpsbox { background: #0a1733; border: 2px solid var(--line); border-radius: 14px; padding: 10px 12px; margin: 6px 0 4px; }
+.dpsbig { font-size: 1.5rem; font-weight: 900; color: var(--gold); }
+.dpspart { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 6px 0; border-top: 1px solid #2c4f93; font-size: .86rem; }
+.dpspart small { color: var(--mut); }
+.btn.go { background: #2f9e4f; border-color: #5fe28a; font-size: 1.1rem; padding: 12px; }
+.btn.danger { background: #b83a3a; border-color: #ff8f8f; }
+.skillhead input[type=checkbox] { width: 20px; height: 20px; }
+.count { color: var(--mut); font-size: .8rem; margin-left: 6px; }
+
+/* the deck stays pinned under the stats bar so cards can be dragged into it from the collection below */
+.deckpanel { position: sticky; top: var(--bar, 64px); z-index: 15; padding: 10px 12px 12px; box-shadow: 0 8px 14px rgba(5,12,32,.6); }
+.deckpanel .panelhead h2 { margin: 0; }
+.deckpanel .slots { margin: 6px 0; }
+.deckgrid.compact { gap: 6px; }
+.deckgrid.compact .cardimg img, .deckgrid.compact .emptybox { max-width: 58px; }
+.deckgrid.compact .cardname { font-size: .6rem; min-height: 1.9em; }
+.deckgrid.compact .pill { font-size: .64rem; padding: 3px 1px; }

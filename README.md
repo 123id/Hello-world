@@ -1,7 +1,15 @@
 # Kingdom Rush Battles — Kingdom Wars boss simulator
 
-Interactive simulator in two steps, like the game. **1 Deck**: pick 1 hero, 3 spells and 4 towers (five saved deck slots), see each card's DPS and compare tower levels 1–3. Tap a card to inspect it (level, stats, skills, perks, route coverage); hold and drag to reorder.
-**2 Battle**: tap a stump on the real map to build (tier, skill purchases), place the hero and barracks rally points, and see boss kill time and DPS. Hold and drag towers between stumps (they swap), and drag the hero and rally dots.
+Interactive tool in two steps, like the game.
+
+**1 Deck — pure numbers.** Build a deck (1 hero, 3 spells, 4 towers) from the collection: drag a card onto a slot, or tap it and press *Use*.
+The deck stays pinned while the collection scrolls. Every card shows its DPS = damage per hit ÷ attack time (`src/sim/dps.ts`); skills add
+damage ÷ cooldown (towers' bought skills only count at level 3); the deck's perks can be switched on or off. There is no map, boss position or
+creeps in this step. The header shows DPS, damage per minute, gold, and an *ideal kill* (boss HP ÷ DPS). Tap a deck card to see how its number is made.
+
+**2 Battle — the simulation.** Tap a stump on the real map to build, place the hero and barracks rally points, and see the boss fight
+(boss position, blocking, creeps) with kill time and DPS. Hold and drag towers between stumps; drag the hero and rally dots.
+
 Icons: the gold coin is cropped from the game; the sword (melee), arrow (ranged), blast (magic) and dynamite (artillery) icons are drawn as SVG in `src/ui/icons.tsx`.
 
 ## Run / deploy
