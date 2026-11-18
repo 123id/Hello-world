@@ -1,7 +1,7 @@
 # Kingdom Rush Battles — Kingdom Wars boss simulator
 
-Interactive simulator: pick a deck (1 hero, 3 spells, 4 towers), build on the 10 tower spots (tier 1–3, skill purchases),
-place the hero and barracks rally points, and see boss kill time and DPS.
+Interactive simulator in two steps, like the game. **1 Deck**: pick 1 hero, 3 spells and 4 towers (five saved deck slots), see each card's DPS and compare tower levels 1–3.
+**2 Battle**: tap a stump on the real map to build (tier, skill purchases), place the hero and barracks rally points, and see boss kill time and DPS.
 
 ## Run / deploy
 - `npm install && npm run dev` — local dev server
@@ -13,6 +13,7 @@ place the hero and barracks rally points, and see boss kill time and DPS.
 - Cards: `data/raw/cards-full.json` (kept out of git) is scrubbed into `src/data/library.json` by `npm run library` /
   `node scripts/build-library.mjs`. The library is authoritative (including boss HP 255,449).
 - Map + creep tables: `src/data/kingdomwars.ts` (transcribed from krb-deck screenshots; route lengths checked against its tile counts).
+- Map picture: `public/map.webp` is the supplied map screenshot with the route lines, arrows and monster sprites painted out (OpenCV inpainting); tower spots and routes are drawn on top.
 - Icons: cropped from in-game screenshots into `public/icons/` (+ `manifest.json`). Kingdom Rush Battles artwork belongs to Ironhide Game Studio; it is used here for an unofficial fan tool.
 
 ## What is assumed (not in the data)

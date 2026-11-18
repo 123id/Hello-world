@@ -40,6 +40,7 @@ interface SkillRT { def: SkillDef; label: string; cd: number; dmg: number; next:
 interface TowerRT {
   label: string; pos: Pt; hitsAir: boolean; highestHp: boolean; range: number; dmg: number; interval: number
   aoe: number; next: number; skills: SkillRT[]
+  buffUntil: number; buffDmg: number; buffRange: number; buffSrc: string // Royal Edict style buff
 }
 interface Zone { pos: Pt; r: number; until: number; dps: number; slow: number; label: string }
 
@@ -98,7 +99,7 @@ export function simulate(inp: SimInput): SimResult {
     const skills = skillsOn.filter((s) => s.supported).map((s) => skillRT(s, `${t.name} · ${s.name}`, cdPct, sdPct))
     if (t.kind === 'shooter') {
       const st = shooterStats(t, td, mods)
-      towers.push({ label, pos: spot, hitsAir: t.hitsAir, highestHp: t.targetsHighestHp, range: st.range, dmg: st.dmg, interval: st.interval, aoe: td.aoe ?? 0, next: 0, skills })
+      towers.push({ label, pos: spot, hitsAir: t.hitsAir, highestHp: t.targetsHighestHp, range: st.range, dmg: st.dmg, interval: st.interval, aoe: td.aoe ?? 0, next: 0, skills, buffUntil: 0, buffDmg: 0, buffRange: 0, buffSrc: '' })
     } else {
       // barracks: units stand at the rally point (clamped into range of the tower)
       let rp = pl.rally ?? spot
@@ -115,7 +116,7 @@ export function simulate(inp: SimInput): SimResult {
         })
       }
       // barracks skills that are supported (rare) are handled as tower skills fired from the rally point
-      if (skills.length) towers.push({ label, pos: rp, hitsAir: true, highestHp: false, range: 1, dmg: 0, interval: 1e9, aoe: 0, next: 1e9, skills })
+      if (skills.length) towers.push({ label, pos: rp, hitsAir: true, highestHp: false, range: 1, dmg: 0, interval: 1e9, aoe: 0, next: 1e9, skills, buffUntil: 0, buffDmg: 0, buffRange: 0, buffSrc: '' })
     }
   }
 
@@ -183,6 +184,22 @@ export function simulate(inp: SimInput): SimResult {
     return best
   }
 
+  /** Royal Edict: cast where it buffs the most boss-hitting tower DPS (perfect placement). Returns false if no tower would benefit yet. */
+  const castBuff = (sp: SpellDef, t: number): boolean => {
+    const live = towers.filter((tw) => tw.interval < 1e8)
+    let best: { list: TowerRT[]; value: number } | null = null
+    for (const c of live) {
+      const scored = live.filter((tw) => dist(tw.pos, c.pos) <= sp.aoe)
+        .map((tw) => ({ tw, v: dist(tw.pos, bossE!.pos) <= tw.range * (1 + sp.buffRangePct / 100) ? tw.dmg / tw.interval : 0 }))
+        .sort((a, b) => b.v - a.v).slice(0, sp.buffTowers)
+      const value = scored.reduce((a, x) => a + x.v, 0)
+      if (!best || value > best.value) best = { list: scored.filter((x) => x.v > 0).map((x) => x.tw), value }
+    }
+    if (!best || best.value <= 0) return false
+    for (const tw of best.list) { tw.buffUntil = t + sp.duration; tw.buffDmg = sp.buffDmgPct / 100; tw.buffRange = sp.buffRangePct / 100; tw.buffSrc = sp.name }
+    return true
+  }
+
   let tick = 0
   for (; ; tick++) {
     const t = tick * DT
@@ -219,6 +236,7 @@ export function simulate(inp: SimInput): SimResult {
     if (bossE && bossE.alive) {
       build.spells.forEach((sp, i) => {
         if (t + EPS < spellNext[i]) return
+        if (sp.kind === 'buff') { if (castBuff(sp, t)) spellNext[i] = advance(spellNext[i], sp.cooldown, t); return }
         spellNext[i] = advance(spellNext[i], sp.cooldown, t)
         const mult = 1 + mods.spellDamage / 100
         if (sp.kind === 'strike') area(bossE!.pos, sp.aoe, mean(sp.dmgMin, sp.dmgMax) * sp.hits * mult, sp.name, t, true)
@@ -242,11 +260,13 @@ export function simulate(inp: SimInput): SimResult {
 
     // towers
     for (const tw of towers) {
-      const target = tw.interval < 1e8 ? pick(tw.pos, tw.range, tw.hitsAir, tw.highestHp) : null
+      const buffed = t < tw.buffUntil
+      const target = tw.interval < 1e8 ? pick(tw.pos, tw.range * (1 + (buffed ? tw.buffRange : 0)), tw.hitsAir, tw.highestHp) : null
       if (target && t + EPS >= tw.next) {
         tw.next = advance(tw.next, tw.interval, t)
-        if (tw.aoe > 0) area(target.pos, tw.aoe, tw.dmg, tw.label, t, tw.hitsAir)
-        else hit(target, tw.dmg, tw.label, t)
+        const extra = buffed ? tw.dmg * tw.buffDmg : 0 // the buff's share is credited to the spell
+        if (tw.aoe > 0) { area(target.pos, tw.aoe, tw.dmg, tw.label, t, tw.hitsAir); if (extra) area(target.pos, tw.aoe, extra, tw.buffSrc, t, tw.hitsAir) }
+        else { hit(target, tw.dmg, tw.label, t); if (extra) hit(target, extra, tw.buffSrc, t) }
         for (const s of tw.skills) if (s.def.kind === 'dot' && !s.def.cooldown) { s.dotTarget = target; s.dotUntil = t + (s.def.duration ?? 0) }
       }
       for (const s of tw.skills) {
