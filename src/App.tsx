@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react'
+import { iconUrl, type CardKind } from './data/icons'
 import { BOSS_ENTERS_SEC, BOSS_KW as BOSS, CREEP_SETS, MAP_KW as MAP } from './data/kingdomwars'
 import { RALLY_RANGE, shooterStats, simulate, type Build, type Placement } from './sim/engine'
 import { dpsAt } from './sim/explorer'
@@ -18,6 +19,11 @@ interface Spot { towerId: string | null; tier: Tier; skills: string[]; rally?: P
 const emptySpot = (): Spot => ({ towerId: null, tier: 3, skills: [] })
 const fmt = (n: number) => Math.round(n).toLocaleString()
 
+function Icon({ kind, id, size = 32 }: { kind: CardKind; id: string; size?: number }) {
+  const u = iconUrl(kind, id)
+  return u ? <img src={u} width={size} height={size} alt="" style={{ objectFit: 'contain', flex: 'none' }} /> : <span style={{ display: 'inline-block', width: size, height: size, flex: 'none' }} />
+}
+
 function Chart({ data, h = 90, color, bars }: { data: { x: number; y: number }[]; h?: number; color: string; bars?: boolean }) {
   const maxY = Math.max(1, ...data.map((d) => d.y))
   const W = FIGHT_SECONDS
@@ -31,16 +37,19 @@ function Chart({ data, h = 90, color, bars }: { data: { x: number; y: number }[]
 }
 
 function CardSelect<T extends { id: string; name: string; selectable: boolean; issues: string[] }>(
-  { value, onChange, list, empty }: { value: string; onChange: (id: string) => void; list: T[]; empty?: string },
+  { value, onChange, list, empty, kind }: { value: string; onChange: (id: string) => void; list: T[]; empty?: string; kind: CardKind },
 ) {
   return (
-    <select value={value} onChange={(e) => onChange(e.target.value)}>
+    <div className="pick">
+      <Icon kind={kind} id={value} size={36} />
+      <select value={value} onChange={(e) => onChange(e.target.value)}>
       {empty !== undefined && <option value="">{empty}</option>}
       {list.filter((c) => c.selectable).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
       <optgroup label="Not simulatable yet (data missing)">
         {list.filter((c) => !c.selectable).map((c) => <option key={c.id} value={c.id} disabled>{c.name}: {[...new Set(c.issues)][0]}</option>)}
       </optgroup>
-    </select>
+      </select>
+    </div>
   )
 }
 
@@ -154,13 +163,23 @@ export function App() {
               return (
                 <g key={sp.id}>
                   {pl && <circle cx={sp.x} cy={sp.y} r={range} fill="rgba(80,160,255,.08)" stroke="rgba(80,160,255,.45)" />}
-                  <circle cx={sp.x} cy={sp.y} r={13} fill={pl ? '#3b6fd4' : '#444'} />
-                  <text x={sp.x} y={sp.y + 5} fontSize="15" fill="#fff" textAnchor="middle" fontWeight="bold">{sp.id}</text>
+                  {pl && iconUrl('towers', pl.tower.id)
+                    ? <>
+                        <image href={iconUrl('towers', pl.tower.id)!} x={sp.x - 20} y={sp.y - 20} width={40} height={40} />
+                        <circle cx={sp.x - 16} cy={sp.y - 16} r={9} fill="#14161a" stroke="#fff" strokeWidth={1.5} />
+                        <text x={sp.x - 16} y={sp.y - 12} fontSize="11" fill="#fff" textAnchor="middle" fontWeight="bold">{sp.id}</text>
+                      </>
+                    : <>
+                        <circle cx={sp.x} cy={sp.y} r={13} fill={pl ? '#3b6fd4' : '#444'} />
+                        <text x={sp.x} y={sp.y + 5} fontSize="15" fill="#fff" textAnchor="middle" fontWeight="bold">{sp.id}</text>
+                      </>}
                   {pl?.rally && <g><line x1={sp.x} y1={sp.y} x2={pl.rally.x} y2={pl.rally.y} stroke="#4ac36b" strokeDasharray="4 3" /><circle cx={pl.rally.x} cy={pl.rally.y} r={7} fill="#4ac36b" /></g>}
                 </g>
               )
             })}
-            {hero && <g><circle cx={heroPos.x} cy={heroPos.y} r={10} fill="#e5b93c" /><text x={heroPos.x} y={heroPos.y + 4} fontSize="11" textAnchor="middle" fontWeight="bold">H</text></g>}
+            {hero && (iconUrl('heroes', hero.id)
+              ? <g><circle cx={heroPos.x} cy={heroPos.y} r={21} fill="#e5b93c" /><image href={iconUrl('heroes', hero.id)!} x={heroPos.x - 18} y={heroPos.y - 18} width={36} height={36} /></g>
+              : <g><circle cx={heroPos.x} cy={heroPos.y} r={10} fill="#e5b93c" /><text x={heroPos.x} y={heroPos.y + 4} fontSize="11" textAnchor="middle" fontWeight="bold">H</text></g>)}
             {scrubPoint?.bossS != null
               ? (() => { const b = pointAt(path, scrubPoint.bossS); return <circle cx={b.x} cy={b.y} r={11} fill="#d84a4a" stroke="#fff" strokeWidth={2} /> })()
               : null}
@@ -192,15 +211,15 @@ export function App() {
         <div className="panel">
           <h2 style={{ marginTop: 0 }}>Deck</h2>
           <label>Hero <button className="mini" onClick={() => setPlacing(placing === 'hero' ? null : 'hero')}>{placing === 'hero' ? 'cancel' : 'place on map'}</button></label>
-          <CardSelect value={heroId} onChange={setHeroId} list={LIBRARY.heroes} />
+          <CardSelect kind="heroes" value={heroId} onChange={setHeroId} list={LIBRARY.heroes} />
           {[0, 1, 2].map((i) => (
             <div key={i}><label>Spell {i + 1}</label>
-              <CardSelect value={spellIds[i]} onChange={(id) => setSpellIds((s) => s.map((x, j) => (j === i ? id : x)))} list={LIBRARY.spells} />
+              <CardSelect kind="spells" value={spellIds[i]} onChange={(id) => setSpellIds((s) => s.map((x, j) => (j === i ? id : x)))} list={LIBRARY.spells} />
             </div>
           ))}
           {[0, 1, 2, 3].map((i) => (
             <div key={i}><label>Tower {i + 1}</label>
-              <CardSelect value={deckIds[i]} onChange={(id) => setDeckIds((s) => s.map((x, j) => (j === i ? id : x)))} list={LIBRARY.towers} />
+              <CardSelect kind="towers" value={deckIds[i]} onChange={(id) => setDeckIds((s) => s.map((x, j) => (j === i ? id : x)))} list={LIBRARY.towers} />
             </div>
           ))}
           <label>Wave set</label>
@@ -214,7 +233,7 @@ export function App() {
             const tower = st.towerId ? deckTowers.find((t) => t.id === st.towerId) : undefined
             return (
               <div key={sp.id} className="spot">
-                <label>Spot {sp.id}</label>
+                <label className="spotlabel">{tower && <Icon kind="towers" id={tower.id} size={26} />}Spot {sp.id}{tower ? ` · ${tower.name}` : ''}</label>
                 <select value={tower ? tower.id : ''} onChange={(e) => setSpot(sp.id, { towerId: e.target.value || null, skills: [], rally: undefined })}>
                   <option value="">— empty —</option>
                   {deckTowers.map((t) => <option key={t.id} value={t.id}>{t.name}</option>)}

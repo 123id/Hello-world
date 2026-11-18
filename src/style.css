@@ -25,3 +25,6 @@ button.mini.on { background: #3b6fd4; }
 button.mini:disabled { opacity: .35; cursor: not-allowed; }
 label.chk { display: flex; gap: 6px; align-items: center; font-size: .78rem; margin: 2px 0; }
 label.chk input { width: auto; }
+.pick { display: flex; gap: 8px; align-items: center; }
+.pick select { flex: 1; min-width: 0; }
+label.spotlabel { display: flex; align-items: center; gap: 6px; }

@@ -13,7 +13,7 @@ place the hero and barracks rally points, and see boss kill time and DPS.
 - Cards: `data/raw/cards-full.json` (kept out of git) is scrubbed into `src/data/library.json` by `npm run library` /
   `node scripts/build-library.mjs`. The library is authoritative (including boss HP 255,449).
 - Map + creep tables: `src/data/kingdomwars.ts` (transcribed from krb-deck screenshots; route lengths checked against its tile counts).
-- Icons: cropped from in-game screenshots into `public/icons/` (+ `manifest.json`). They are game artwork, so they are **not committed** (gitignored) until the owner decides; the app does not need them yet.
+- Icons: cropped from in-game screenshots into `public/icons/` (+ `manifest.json`). Kingdom Rush Battles artwork belongs to Ironhide Game Studio; it is used here for an unofficial fan tool.
 
 ## What is assumed (not in the data)
 Creep speed/damage/route split · creep spawn spacing (evenly from first appearance until 215 s, fitted to krb-deck counts) ·
