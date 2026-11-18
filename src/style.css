@@ -15,3 +15,13 @@ td { padding: 2px 4px; border-bottom: 1px solid #2d323b; }
 td:last-child { text-align: right; }
 td:not(:first-child) { text-align: right; }
 svg { width: 100%; height: auto; display: block; background: #0f1114; border-radius: 6px; }
+.big { font-size: 1.4rem; font-weight: 700; margin-bottom: 6px; }
+.stats { display: flex; flex-wrap: wrap; gap: 6px 18px; font-size: .9rem; color: #b8bcc6; margin-bottom: 6px; }
+.stats b { color: #fff; }
+.spot { border-top: 1px solid #2d323b; padding: 4px 0 6px; }
+.row { display: flex; gap: 6px; flex-wrap: wrap; margin: 4px 0; }
+button.mini { padding: 3px 8px; font-size: .75rem; background: #2d323b; }
+button.mini.on { background: #3b6fd4; }
+button.mini:disabled { opacity: .35; cursor: not-allowed; }
+label.chk { display: flex; gap: 6px; align-items: center; font-size: .78rem; margin: 2px 0; }
+label.chk input { width: auto; }

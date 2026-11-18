@@ -1,6 +1,7 @@
 // Kingdom Wars boss map + creep tables.
 // Transcribed from krb-deck screenshots (map view + "Who enters" tables). Route lengths were
 // checked against krb-deck's own tile counts: Route 1 = 35, Route 2 = 18, Flying = 21.
+import { BOSS_DEFAULT } from '../sim/library'
 import type { BossDef, CreepSpawn, MapDef, Pt, RouteDef } from '../sim/types'
 
 /** ASSUMPTION (unverified): 1 map tile = 80 range/AoE units (so AoE 80 = 1 tile, range 160 = 2 tiles). */
@@ -33,47 +34,42 @@ export const MAP_KW: MapDef = {
   path: pts(R1), // the boss walks Route 1
   spots: Object.entries(SPOTS).map(([id, [x, y]]) => ({ id, x: x * TILE, y: y * TILE })),
   routes: ROUTES,
+  bossRouteId: 'r1',
 }
 
 /**
- * Boss. HP/damage are the library's "Gul'Thak LVL 5" values.
- * CONFLICT: krb-deck lists Gul'Thak health as "115 484+" — unresolved.
- * Speed = 1 tile/s (krb-deck: Route 1 is 35 tiles, boss ~35 s). Armor, resist, attack interval unknown.
+ * Boss = the library's "Gul'Thak LVL 5" (library is authoritative; krb-deck's "115 484+" is ignored).
+ * Speed = 1 tile/s (krb-deck: Route 1 is 35 tiles, boss ~35 s). Armor / resist unknown -> 0.
+ * Attack interval is ASSUMED (not in library).
  */
 export const BOSS_KW: BossDef = {
-  name: "Gul'Thak", hp: 255449, armor: 0, magicResist: 0, speed: TILE * 1.0,
-  damage: (4428 + 5109) / 2, attackInterval: 1.5,
+  name: BOSS_DEFAULT.name.replace(/ LVL \d+/, ''), hp: BOSS_DEFAULT.health, armor: 0, magicResist: 0, speed: TILE * 1.0,
+  damage: (BOSS_DEFAULT.damageMin + BOSS_DEFAULT.damageMax) / 2, attackInterval: 1.5,
 }
 export const BOSS_ENTERS_SEC = 31.5
 
-// "Who enters" tables. Only counts, first-spawn time and HP are known; the spawn schedule between
-// first spawn and the last creep, plus each creep's route, speed and armor, are still missing.
+// ---- "Who enters" tables (krb-deck): count, first spawn, HP are real. -----------------------------------
+// Speed / damage / attack interval / route are ASSUMED placeholders (the user said ignore for now);
+// they only decide how fast creeps arrive and how long barracks units survive.
+type Row = [name: string, count: number, firstSec: number, hp: number]
+// speed in tiles/s, flying?, route
+const ASSUMED: Record<string, { speed: number; flying?: boolean; route?: 'fly' }> = {
+  Goblin: { speed: 1.0 }, 'Goblin Warrior': { speed: 0.8 }, 'Goblin Wizard': { speed: 0.8 }, Wulf: { speed: 1.6 },
+  'Spider Hatchling': { speed: 1.2 }, 'Spider Matriarch': { speed: 0.7 }, 'Orc Shaman': { speed: 0.7 }, Orc: { speed: 0.7 },
+  'Orc Champion': { speed: 0.6 }, Ogre: { speed: 0.5 },
+  Gargoyle: { speed: 1.2, flying: true, route: 'fly' },
+  'Goblin Copter': { speed: 1.2, flying: true }, // krb-deck's Flying route holds 38 enemies = the gargoyles only
+}
+const mk = (rows: Row[]): CreepSpawn[] => rows.map(([name, count, firstSec, hp]) => {
+  const a = ASSUMED[name]
+  return { name, count, firstSec, hp, flying: !!a.flying, route: a.route ?? 'ground', speed: a.speed * TILE, damage: Math.round(hp * 0.06), interval: 1.2 }
+})
+
 export const CREEP_SETS: Record<'A' | 'B', CreepSpawn[]> = {
-  A: [
-    { name: 'Goblin', count: 47, firstSec: 8, hp: 1050 },
-    { name: 'Gargoyle', count: 38, firstSec: 7, hp: 2850, flying: true },
-    { name: 'Goblin Copter', count: 34, firstSec: 10.5, hp: 5400, flying: true },
-    { name: 'Wulf', count: 33, firstSec: 1, hp: 1500 },
-    { name: 'Spider Hatchling', count: 19, firstSec: 122, hp: 390 },
-    { name: 'Orc Shaman', count: 13, firstSec: 50, hp: 6300 },
-    { name: 'Goblin Warrior', count: 12, firstSec: 45, hp: 3900 },
-    { name: 'Goblin Wizard', count: 10, firstSec: 16.5, hp: 5400 },
-    { name: 'Orc', count: 8, firstSec: 64, hp: 6900 },
-    { name: 'Orc Champion', count: 7, firstSec: 89, hp: 18600 },
-    { name: 'Spider Matriarch', count: 3, firstSec: 185, hp: 5250 },
-    { name: 'Ogre', count: 2, firstSec: 207.5, hp: 33750 },
-  ],
-  B: [
-    { name: 'Goblin', count: 58, firstSec: 0, hp: 1050 },
-    { name: 'Orc Shaman', count: 30, firstSec: 50, hp: 6300 },
-    { name: 'Wulf', count: 29, firstSec: 12, hp: 1500 },
-    { name: 'Gargoyle', count: 29, firstSec: 16, hp: 2850, flying: true },
-    { name: 'Spider Hatchling', count: 22, firstSec: 122, hp: 390 },
-    { name: 'Goblin Warrior', count: 17, firstSec: 2.5, hp: 3900 },
-    { name: 'Orc', count: 14, firstSec: 64, hp: 6900 },
-    { name: 'Goblin Wizard', count: 10, firstSec: 16.5, hp: 5400 },
-    { name: 'Orc Champion', count: 8, firstSec: 66, hp: 18600 },
-    { name: 'Ogre', count: 5, firstSec: 95.5, hp: 33750 },
-    { name: 'Spider Matriarch', count: 3, firstSec: 185, hp: 5250 },
-  ],
+  A: mk([['Goblin', 47, 8, 1050], ['Gargoyle', 38, 7, 2850], ['Goblin Copter', 34, 10.5, 5400], ['Wulf', 33, 1, 1500],
+    ['Spider Hatchling', 19, 122, 390], ['Orc Shaman', 13, 50, 6300], ['Goblin Warrior', 12, 45, 3900], ['Goblin Wizard', 10, 16.5, 5400],
+    ['Orc', 8, 64, 6900], ['Orc Champion', 7, 89, 18600], ['Spider Matriarch', 3, 185, 5250], ['Ogre', 2, 207.5, 33750]]),
+  B: mk([['Goblin', 58, 0, 1050], ['Orc Shaman', 30, 50, 6300], ['Wulf', 29, 12, 1500], ['Gargoyle', 29, 16, 2850],
+    ['Spider Hatchling', 22, 122, 390], ['Goblin Warrior', 17, 2.5, 3900], ['Orc', 14, 64, 6900], ['Goblin Wizard', 10, 16.5, 5400],
+    ['Orc Champion', 8, 66, 18600], ['Ogre', 5, 95.5, 33750], ['Spider Matriarch', 3, 185, 5250]]),
 }
