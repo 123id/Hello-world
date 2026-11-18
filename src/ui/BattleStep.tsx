@@ -2,12 +2,11 @@ import { useRef, useState, type ReactNode } from 'react'
 import { iconUrl } from '../data/icons'
 import { RALLY_RANGE, shooterStats, type Placement } from '../sim/engine'
 import { dist, pointAt } from '../sim/geometry'
-import { TIERS, type HeroDef, type TowerDef } from '../sim/library'
+import type { HeroDef, TowerDef } from '../sim/library'
 import type { Mods } from '../sim/perks'
 import type { Pt } from '../sim/types'
 import { Card, Sheet } from './common'
 import { useLongPressDrag, type DragHandlers } from './drag'
-import { Gold } from './icons'
 import { MAP, PATH, clampRally, type Placing, type Spot, type Spots } from './state'
 
 /** An SVG group that can be tapped, or held and dragged. */
@@ -149,36 +148,18 @@ export function BattleStep(p: Props) {
       </section>
 
       {p.selected && !p.placing && sel && (
-        <Sheet title={`Spot ${p.selected}`} onClose={() => p.setSelected(null)}>
-          <div className="hint">Choose a tower from your deck:</div>
+        <Sheet title={`Stump ${p.selected}`} onClose={() => p.setSelected(null)}>
+          {p.deckTowers.length === 0 ? <div className="hint">Your deck has no towers yet. Add some in step 1.</div> : <div className="hint">Build one of the towers in your deck here:</div>}
           <div className="deckgrid">
             {p.deckTowers.map((t) => (
-              <Card key={t.id} kind="towers" id={t.id} sel={sel.towerId === t.id} pill={t.kind === 'barracks' ? 'barracks' : t.cls}
-                onClick={() => p.setSpot(p.selected!, { towerId: sel.towerId === t.id ? null : t.id, skills: [], rally: undefined })} />
+              <Card key={t.id} kind="towers" id={t.id} sel={sel.towerId === t.id} pill={sel.towerId === t.id ? 'built here' : p.spots && Object.values(p.spots).some((x) => x.towerId === t.id) ? 'built elsewhere' : t.kind === 'barracks' ? 'barracks' : t.cls}
+                onClick={() => p.setSpot(p.selected!, { towerId: sel.towerId === t.id ? null : t.id, rally: undefined })} />
             ))}
           </div>
-          {selTower && (
-            <>
-              <div className="hint" style={{ marginTop: 10 }}>Level</div>
-              <div className="seg">
-                {TIERS.map((t) => (
-                  <button key={t} className={sel.tier === t ? 'on' : ''} disabled={!selTower.tiers[t]} onClick={() => p.setSpot(p.selected!, { tier: t })}>
-                    LVL{t}{selTower.tiers[t]?.cost != null ? <> · <Gold n={selTower.tiers[t]!.cost!} size={14} /></> : null}
-                  </button>
-                ))}
-              </div>
-              {selTower.kind === 'barracks' && (
-                <button className="btn wide" style={{ marginTop: 10 }} onClick={() => p.setPlacing({ rally: p.selected! })}>Set rally point on the map</button>
-              )}
-              <div className="hint" style={{ marginTop: 10 }}>Skills you bought (greyed = not simulated yet)</div>
-              {selTower.skills.map((s) => (
-                <label key={s.id} className="chk" title={s.supported ? '' : s.why}>
-                  <input type="checkbox" checked={sel.skills.includes(s.id)} onChange={(e) => p.setSpot(p.selected!, { skills: e.target.checked ? [...sel.skills, s.id] : sel.skills.filter((x) => x !== s.id) })} />
-                  <span style={{ opacity: s.supported ? 1 : 0.5 }}>{s.name}{s.cost != null ? <> · <Gold n={s.cost} size={14} /></> : null}{s.supported ? '' : ' (not simulated)'}</span>
-                </label>
-              ))}
-            </>
+          {selTower?.kind === 'barracks' && (
+            <button className="btn wide" style={{ marginTop: 10 }} onClick={() => p.setPlacing({ rally: p.selected! })}>Set rally point on the map</button>
           )}
+          {selTower && <div className="hint" style={{ marginTop: 10 }}>Tower level and bought skills are set in step 1 (currently level {selPlacement?.tier ?? '?'}).</div>}
         </Sheet>
       )}
     </>

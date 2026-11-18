@@ -11,11 +11,11 @@ export const MAP = MAP_KW
 export const PATH = buildPath(MAP.path)
 export const fmt = (n: number) => Math.round(n).toLocaleString()
 
-export interface Spot { towerId: string | null; tier: Tier; skills: string[]; rally?: Pt }
+export interface Spot { towerId: string | null; rally?: Pt }
 export type Spots = Record<string, Spot>
 export type Placing = null | 'hero' | { rally: string }
 
-export const emptySpots = (): Spots => Object.fromEntries(MAP.spots.map((s) => [s.id, { towerId: null, tier: 3 as Tier, skills: [] as string[] }]))
+export const emptySpots = (): Spots => Object.fromEntries(MAP.spots.map((s) => [s.id, { towerId: null } as Spot]))
 
 export const nearestOnRoute = (p: Pt): Pt => {
   let best = pointAt(PATH, 0), bd = Infinity
@@ -40,7 +40,7 @@ export function autoPlace(towers: TowerDef[]): Spots {
       else score = samples.filter((q) => dist(q, sp) <= (td.range ?? 0)).length
       if (!best || score > best.score) best = { id: sp.id, score }
     }
-    if (best && best.score > 0) { used.add(best.id); spots[best.id] = { towerId: t.id, tier: 3, skills: [] } }
+    if (best && best.score > 0) { used.add(best.id); spots[best.id] = { towerId: t.id } }
   }
   return spots
 }
@@ -48,20 +48,38 @@ export function autoPlace(towers: TowerDef[]): Spots {
 // ---- cards ---------------------------------------------------------------------------
 export type Listed = { id: string; name: string; selectable: boolean; issues: string[] }
 export const listOf = (k: CardKind): Listed[] => (k === 'heroes' ? LIBRARY.heroes : k === 'spells' ? LIBRARY.spells : LIBRARY.towers)
-export const usable = (k: CardKind, id: string) => !!listOf(k).find((c) => c.id === id && c.selectable)
 
-// ---- deck slots (saved in this browser) -----------------------------------------------
-export interface DeckSave { heroId: string; spellIds: string[]; deckIds: string[] }
-export const DEFAULT_DECK: DeckSave = {
-  heroId: 'alric', spellIds: ['royal-edict', 'ultimate-strike', 'thunderbolt'],
-  deckIds: ['genies-domains', 'witches-coven', 'crimson-manor', 'twilight-longbow'],
+// ---- the deck being built (saved per slot in this browser) ---------------------------------
+export interface DeckState {
+  hero: string | null
+  spells: (string | null)[] // 3 slots
+  towers: (string | null)[] // 4 slots
+  tier: Tier // every tower in the deck at this level
+  skills: Record<string, string[]> // bought skills per tower id (they only work at level 3)
+  perks: boolean // apply the deck's perks to the numbers
 }
-export const sanitize = (d: DeckSave | undefined): DeckSave => (
-  d && usable('heroes', d.heroId) && d.spellIds?.length === 3 && d.spellIds.every((x) => usable('spells', x)) && d.deckIds?.length === 4 && d.deckIds.every((x) => usable('towers', x)) ? d : DEFAULT_DECK
-)
-const KEY = 'krb-decks-v2'
-export const loadDecks = (): Record<number, DeckSave> => { try { return JSON.parse(localStorage.getItem(KEY) ?? '{}') } catch { return {} } }
-export const saveDecks = (d: Record<number, DeckSave>) => { try { localStorage.setItem(KEY, JSON.stringify(d)) } catch { /* private mode etc. */ } }
+export const emptyDeck = (): DeckState => ({ hero: null, spells: [null, null, null], towers: [null, null, null, null], tier: 3, skills: {}, perks: true })
+export const DEFAULT_DECK: DeckState = {
+  hero: 'alric', spells: ['royal-edict', 'ultimate-strike', 'thunderbolt'],
+  towers: ['genies-domains', 'witches-coven', 'crimson-manor', 'twilight-longbow'], tier: 3, skills: {}, perks: true,
+}
+const known = (k: CardKind, id: unknown): id is string => typeof id === 'string' && listOf(k).some((c) => c.id === id)
+const slots = (k: CardKind, v: unknown, n: number): (string | null)[] => Array.from({ length: n }, (_, i) => { const id = Array.isArray(v) ? v[i] : null; return known(k, id) ? id : null })
+/** Accepts whatever was saved and returns a valid deck (unknown cards become empty slots, no duplicates). */
+export function sanitize(d: unknown): DeckState {
+  const o = (d && typeof d === 'object' ? d : {}) as Record<string, unknown>
+  const dedupe = (a: (string | null)[]) => a.map((x, i) => (x && a.indexOf(x) !== i ? null : x))
+  return {
+    hero: known('heroes', o.hero) ? o.hero : null, spells: dedupe(slots('spells', o.spells, 3)), towers: dedupe(slots('towers', o.towers, 4)),
+    tier: o.tier === 1 || o.tier === 2 || o.tier === 3 ? o.tier : 3,
+    skills: o.skills && typeof o.skills === 'object' ? (o.skills as Record<string, string[]>) : {}, perks: o.perks !== false,
+  }
+}
+const KEY = 'krb-decks-v3'
+export const loadDecks = (): Record<number, DeckState> => {
+  try { const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Record<string, unknown>; return Object.fromEntries(Object.entries(raw).map(([k, v]) => [+k, sanitize(v)])) } catch { return {} }
+}
+export const saveDecks = (d: Record<number, DeckState>) => { try { localStorage.setItem(KEY, JSON.stringify(d)) } catch { /* private mode etc. */ } }
 
 // ---- build maths ----------------------------------------------------------------------
 export function goldOf(placements: Placement[]): { gold: number; unknown: number } {
@@ -73,9 +91,6 @@ export function goldOf(placements: Placement[]): { gold: number; unknown: number
   }
   return { gold, unknown }
 }
-
-/** Same build with every tower at tier `t` (towers lacking data for that tier keep their own). */
-export const withTier = (placements: Placement[], t: Tier): Placement[] => placements.map((p) => (p.tower.tiers[t] ? { ...p, tier: t } : p))
 
 /** Damage per second credited to one card: hero/spell/tower names prefix the source labels the engine writes. */
 export function sourceDps(by: Record<string, number>, name: string, secs: number): number {
