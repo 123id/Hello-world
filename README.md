@@ -6,7 +6,8 @@ place the hero and barracks rally points, and see boss kill time and DPS.
 ## Run / deploy
 - `npm install && npm run dev` — local dev server
 - `npm test` — simulation tests
-- Cloudflare Pages: build command `npm run build`, output directory `dist` (static site, no backend)
+- Cloudflare (Workers static assets): build command `npm run build`, deploy command `npx wrangler deploy`; `wrangler.jsonc` serves `./dist`
+  (the Worker name in the dashboard must be `hello-world`, or change `name` in `wrangler.jsonc`)
 
 ## Data
 - Cards: `data/raw/cards-full.json` (kept out of git) is scrubbed into `src/data/library.json` by `npm run library` /
