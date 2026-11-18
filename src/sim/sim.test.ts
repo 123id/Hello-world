@@ -31,6 +31,15 @@ describe('library adapter', () => {
     expect(towerById('royal-archers')!.hitsAir).toBe(true)
     expect(towerById('twilight-longbow')!.targetsHighestHp).toBe(true)
   })
+  it('files Wrath of Blackburn as a spell and fills Gerald\'s respawn from the game', () => {
+    expect(heroById('wrath-of-blackburn')).toBeUndefined()
+    const w = spellById('wrath-of-blackburn')!
+    expect(w.selectable).toBe(false) // summon spell: not simulated yet
+    expect(w.issues.join()).toMatch(/summon/)
+    const g = heroById('gerald-lightseeker')!
+    expect(g.respawn).toBe(15)
+    expect(g.respawnAssumed).toBe(false)
+  })
   it('fills perk values by name (Mana Wrath = +3% spell damage)', () => {
     const p = towerById('arcane-wizard')!.perks.find((x) => x.name === 'Mana Wrath')!
     expect(p.pct).toBe(3)

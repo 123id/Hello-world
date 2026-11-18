@@ -76,6 +76,12 @@ export const TOWER_CLASS: Record<string, TowerClass> = {
 }
 const AIR_EXCEPTIONS = new Set(['tesla-x104'])
 
+// Cards the raw library files under the wrong kind (confirmed from the game's deck screen).
+// Wrath of Blackburn sits in a spell slot and has a single summon skill, so it is a spell.
+const MISFILED_SPELLS = new Set(['wrath-of-blackburn'])
+// Values the library lacks but the game shows (hero info page: Gerald Lightseeker respawn 15).
+const RESPAWN_FIXES: Record<string, number> = { 'gerald-lightseeker': 15 }
+
 const num = (v: unknown): number | null => (typeof v === 'number' && Number.isFinite(v) ? v : null)
 const avg = (a: number, b: number) => (a + b) / 2
 
@@ -147,13 +153,13 @@ function buildTowers(): TowerDef[] {
 }
 
 function buildHeroes(): HeroDef[] {
-  return (raw.heroes as Raw[]).map((c): HeroDef => {
+  return (raw.heroes as Raw[]).filter((c) => !MISFILED_SPELLS.has(c.id)).map((c): HeroDef => {
     const issues: string[] = []
     const hp = num(c.health), dmin = num(c.damageMin), dmax = num(c.damageMax), iv = num(c.attackIntervalSec)
     if (hp === null) issues.push('health missing')
     if (dmin === null || dmax === null) issues.push('damage missing')
     if (iv === null) issues.push('attack speed missing')
-    const resp = num(c.respawnSec)
+    const resp = num(c.respawnSec) ?? RESPAWN_FIXES[c.id] ?? null
     return {
       id: c.id, name: c.name, rarity: c.rarity ?? null,
       hp: hp ?? 0, armor: num(c.armorPct) ?? 0, dmgMin: dmin ?? 0, dmgMax: dmax ?? 0, interval: iv ?? 1,
@@ -164,7 +170,7 @@ function buildHeroes(): HeroDef[] {
 }
 
 function buildSpells(): SpellDef[] {
-  return (raw.spells as Raw[]).map((c): SpellDef => {
+  return [...(raw.spells as Raw[]), ...(raw.heroes as Raw[]).filter((c) => MISFILED_SPELLS.has(c.id))].map((c): SpellDef => {
     const cd = num(c.cooldownSec)
     const issues: string[] = []
     let kind: SpellDef['kind'] = 'other'
@@ -172,7 +178,7 @@ function buildSpells(): SpellDef[] {
     if (c.kind === 'spellDamage' && dmin !== null && dmax !== null && cd) kind = 'strike'
     else if (c.kind === 'spellDamage' && pmin !== null && pmax !== null && dur && cd) kind = 'zone'
     else if (c.kind === 'spellBuff' && num(c.buffDamagePct) !== null && dur && cd) kind = 'buff'
-    else issues.push(c.kind === 'spellDamage' ? 'damage or duration missing in library' : `${c.kind ?? 'unknown'} spell not simulated yet`)
+    else issues.push(c.kind === 'spellDamage' ? 'damage or duration missing in library' : `${c.kind ?? (MISFILED_SPELLS.has(c.id) ? 'summon' : 'unknown')} spell not simulated yet`)
     return {
       id: c.id, name: c.name, rarity: c.rarity ?? null, kind, cooldown: cd ?? 0, aoe: num(c.aoe) ?? 80,
       hits: num(c.hits) ?? 1, dmgMin: dmin ?? 0, dmgMax: dmax ?? 0,
