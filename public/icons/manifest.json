@@ -1,0 +1,260 @@
+{
+ "spells:ultimate-strike": {
+  "file": "icons/spells-ultimate-strike.png",
+  "w": 264,
+  "h": 280,
+  "shape": "hex"
+ },
+ "towers:elephant-stompguard": {
+  "file": "icons/towers-elephant-stompguard.png",
+  "w": 196,
+  "h": 214,
+  "shape": "rect"
+ },
+ "heroes:asra": {
+  "file": "icons/heroes-asra.png",
+  "w": 148,
+  "h": 158,
+  "shape": "rect"
+ },
+ "towers:holy-sanctuary": {
+  "file": "icons/towers-holy-sanctuary.png",
+  "w": 100,
+  "h": 106,
+  "shape": "rect"
+ },
+ "heroes:king-malik": {
+  "file": "icons/heroes-king-malik.png",
+  "w": 146,
+  "h": 158,
+  "shape": "rect"
+ },
+ "towers:witches-coven": {
+  "file": "icons/towers-witches-coven.png",
+  "w": 174,
+  "h": 186,
+  "shape": "rect"
+ },
+ "towers:battle-mecha": {
+  "file": "icons/towers-battle-mecha.png",
+  "w": 242,
+  "h": 250,
+  "shape": "rect"
+ },
+ "towers:musketeer-garrison": {
+  "file": "icons/towers-musketeer-garrison.png",
+  "w": 191,
+  "h": 194,
+  "shape": "rect"
+ },
+ "spells:rain-of-fire": {
+  "file": "icons/spells-rain-of-fire.png",
+  "w": 218,
+  "h": 232,
+  "shape": "hex"
+ },
+ "heroes:aegion-brightsteel": {
+  "file": "icons/heroes-aegion-brightsteel.png",
+  "w": 163,
+  "h": 160,
+  "shape": "rect"
+ },
+ "spells:reinforcements": {
+  "file": "icons/spells-reinforcements.png",
+  "w": 104,
+  "h": 111,
+  "shape": "hex"
+ },
+ "spells:cursed-vines": {
+  "file": "icons/spells-cursed-vines.png",
+  "w": 146,
+  "h": 160,
+  "shape": "hex"
+ },
+ "spells:thunderbolt": {
+  "file": "icons/spells-thunderbolt.png",
+  "w": 173,
+  "h": 203,
+  "shape": "hex"
+ },
+ "towers:twilight-longbow": {
+  "file": "icons/towers-twilight-longbow.png",
+  "w": 243,
+  "h": 266,
+  "shape": "rect"
+ },
+ "heroes:alric": {
+  "file": "icons/heroes-alric.png",
+  "w": 97,
+  "h": 111,
+  "shape": "rect"
+ },
+ "heroes:drakkan": {
+  "file": "icons/heroes-drakkan.png",
+  "w": 97,
+  "h": 106,
+  "shape": "rect"
+ },
+ "heroes:bonehart": {
+  "file": "icons/heroes-bonehart.png",
+  "w": 101,
+  "h": 104,
+  "shape": "rect"
+ },
+ "towers:crimson-manor": {
+  "file": "icons/towers-crimson-manor.png",
+  "w": 102,
+  "h": 104,
+  "shape": "rect"
+ },
+ "towers:cursed-altar": {
+  "file": "icons/towers-cursed-altar.png",
+  "w": 102,
+  "h": 104,
+  "shape": "rect"
+ },
+ "towers:assassins": {
+  "file": "icons/towers-assassins.png",
+  "w": 157,
+  "h": 166,
+  "shape": "rect"
+ },
+ "towers:blazing-gem": {
+  "file": "icons/towers-blazing-gem.png",
+  "w": 204,
+  "h": 211,
+  "shape": "rect"
+ },
+ "towers:arcane-wizard": {
+  "file": "icons/towers-arcane-wizard.png",
+  "w": 204,
+  "h": 215,
+  "shape": "rect"
+ },
+ "heroes:alleria-and-wildfang": {
+  "file": "icons/heroes-alleria-and-wildfang.png",
+  "w": 201,
+  "h": 217,
+  "shape": "rect"
+ },
+ "heroes:ashbite": {
+  "file": "icons/heroes-ashbite.png",
+  "w": 184,
+  "h": 195,
+  "shape": "rect"
+ },
+ "towers:denas-bastion": {
+  "file": "icons/towers-denas-bastion.png",
+  "w": 220,
+  "h": 225,
+  "shape": "rect"
+ },
+ "heroes:beresad": {
+  "file": "icons/heroes-beresad.png",
+  "w": 227,
+  "h": 239,
+  "shape": "rect"
+ },
+ "towers:vampires": {
+  "file": "icons/towers-crimson-manor.png",
+  "w": 102,
+  "h": 104,
+  "shape": "rect"
+ },
+ "heroes:phoenix": {
+  "file": "icons/heroes-phoenix.png",
+  "w": 96,
+  "h": 103,
+  "shape": "rect"
+ },
+ "heroes:eiskalt": {
+  "file": "icons/heroes-eiskalt.png",
+  "w": 99,
+  "h": 106,
+  "shape": "rect"
+ },
+ "heroes:dierdre": {
+  "file": "icons/heroes-dierdre.png",
+  "w": 156,
+  "h": 166,
+  "shape": "rect"
+ },
+ "heroes:lord-veznan": {
+  "file": "icons/heroes-lord-veznan.png",
+  "w": 154,
+  "h": 152,
+  "shape": "rect"
+ },
+ "heroes:raelyn": {
+  "file": "icons/heroes-raelyn.png",
+  "w": 154,
+  "h": 153,
+  "shape": "rect"
+ },
+ "heroes:hacksaw": {
+  "file": "icons/heroes-hacksaw.png",
+  "w": 156,
+  "h": 155,
+  "shape": "rect"
+ },
+ "heroes:ingvar-bearclaw": {
+  "file": "icons/heroes-ingvar-bearclaw.png",
+  "w": 201,
+  "h": 216,
+  "shape": "rect"
+ },
+ "spells:fallen-order": {
+  "file": "icons/spells-fallen-order.png",
+  "w": 166,
+  "h": 182,
+  "shape": "hex"
+ },
+ "towers:sandworm-hollow": {
+  "file": "icons/towers-sandworm-hollow.png",
+  "w": 212,
+  "h": 213,
+  "shape": "rect"
+ },
+ "spells:swarm-of-locusts": {
+  "file": "icons/spells-swarm-of-locusts.png",
+  "w": 196,
+  "h": 212,
+  "shape": "hex"
+ },
+ "spells:teleport": {
+  "file": "icons/spells-teleport.png",
+  "w": 190,
+  "h": 204,
+  "shape": "hex"
+ },
+ "heroes:vesper": {
+  "file": "icons/heroes-vesper.png",
+  "w": 149,
+  "h": 158,
+  "shape": "rect"
+ },
+ "heroes:wrath-of-blackburn": {
+  "file": "icons/heroes-wrath-of-blackburn.png",
+  "w": 166,
+  "h": 182,
+  "shape": "hex"
+ },
+ "heroes:magnus-spellbane": {
+  "file": "icons/heroes-magnus-spellbane.png",
+  "w": 240,
+  "h": 297,
+  "shape": "rect"
+ },
+ "spells:solar-blast": {
+  "file": "icons/spells-solar-blast.png",
+  "w": 268,
+  "h": 293,
+  "shape": "hex"
+ },
+ "spells:polymorph": {
+  "file": "icons/spells-polymorph.png",
+  "w": 265,
+  "h": 290,
+  "shape": "hex"
+ }
+}
