@@ -2,10 +2,16 @@
 
 Interactive tool in two steps, like the game.
 
-**1 Deck — pure numbers.** Build a deck (1 hero, 3 spells, 4 towers) from the collection: drag a card onto a slot, or tap it and press *Use*.
-The deck stays pinned while the collection scrolls. Every card shows its DPS = damage per hit ÷ attack time (`src/sim/dps.ts`); skills add
-damage ÷ cooldown (towers' bought skills only count at level 3); the deck's perks can be switched on or off. There is no map, boss position or
-creeps in this step. The header shows DPS, damage per minute, gold, and an *ideal kill* (boss HP ÷ DPS). Tap a deck card to see how its number is made.
+**1 Deck — pure numbers.** Build a deck (1 hero, 3 spells, 4 towers) from the collection: drag a card onto a slot, or tap it and press *Use*
+(on a full deck it asks which card to replace and shows the deck's DPS after each choice). The deck stays pinned while the collection scrolls.
+Every card shows one DPS number = basic attack (damage per hit ÷ attack time) **plus all its skills** (`src/sim/dps.ts`):
+- skills: damage ÷ cooldown; multi-hit skills × number of hits (switchable between "listed damage is per hit" and "per cast"); chance skills × chance;
+  per-level cooldowns and damage-over-time values; summons = units × hit ÷ interval × (time alive ÷ cooldown). A skill whose numbers are missing
+  in the library is listed with the reason (for example a summon with no lifetime) instead of being guessed
+- tower level 1/2/3 for all towers (the switch in the pinned header) or per tower (its info page, which also shows the DPS at each level); tower skills start at level 3 and can be switched off one by one
+- the deck's perks can be switched on or off
+There is no map, boss position or creeps in this step. The header shows DPS (with the change after every swap), damage per minute, gold and an *ideal kill*
+(boss HP ÷ DPS). Tap a deck card to see how its number is made.
 
 **2 Battle — the simulation.** Tap a stump on the real map to build, place the hero and barracks rally points, and see the boss fight
 (boss position, blocking, creeps) with kill time and DPS. Hold and drag towers between stumps; drag the hero and rally dots.

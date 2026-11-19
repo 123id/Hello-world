@@ -54,28 +54,42 @@ export interface DeckState {
   hero: string | null
   spells: (string | null)[] // 3 slots
   towers: (string | null)[] // 4 slots
-  tier: Tier // every tower in the deck at this level
-  skills: Record<string, string[]> // bought skills per tower id (they only work at level 3)
+  tier: Tier // level of every tower in the deck ...
+  tiers: Record<string, Tier> // ... except towers set individually (by tower id)
+  skillsOff: Record<string, string[]> // skills of a tower that are switched off; every skill counts by default
   perks: boolean // apply the deck's perks to the numbers
+  perHit: boolean // multi-hit skills and spells: the listed damage is per hit (× number of hits) rather than per cast
 }
-export const emptyDeck = (): DeckState => ({ hero: null, spells: [null, null, null], towers: [null, null, null, null], tier: 3, skills: {}, perks: true })
+export const emptyDeck = (): DeckState => ({ hero: null, spells: [null, null, null], towers: [null, null, null, null], tier: 3, tiers: {}, skillsOff: {}, perks: true, perHit: true })
 export const DEFAULT_DECK: DeckState = {
   hero: 'alric', spells: ['royal-edict', 'ultimate-strike', 'thunderbolt'],
-  towers: ['genies-domains', 'witches-coven', 'crimson-manor', 'twilight-longbow'], tier: 3, skills: {}, perks: true,
+  towers: ['genies-domains', 'witches-coven', 'crimson-manor', 'twilight-longbow'], tier: 3, tiers: {}, skillsOff: {}, perks: true, perHit: true,
+}
+type ListKind = 'heroes' | 'spells' | 'towers'
+export const listOfDeck = (d: DeckState, kind: ListKind): (string | null)[] => (kind === 'heroes' ? [d.hero] : kind === 'spells' ? d.spells : d.towers)
+export const withList = (d: DeckState, kind: ListKind, list: (string | null)[]): DeckState => (kind === 'heroes' ? { ...d, hero: list[0] } : kind === 'spells' ? { ...d, spells: list } : { ...d, towers: list })
+/** Put a card (or nothing) into a slot; a card already in the deck moves, swapping with whatever was in the target slot. */
+export function placed(d: DeckState, kind: ListKind, index: number, id: string | null): DeckState {
+  const list = [...listOfDeck(d, kind)]
+  if (id) { const from = list.indexOf(id); if (from >= 0 && from !== index) list[from] = list[index] }
+  list[index] = id
+  return withList(d, kind, list)
 }
 const known = (k: CardKind, id: unknown): id is string => typeof id === 'string' && listOf(k).some((c) => c.id === id)
 const slots = (k: CardKind, v: unknown, n: number): (string | null)[] => Array.from({ length: n }, (_, i) => { const id = Array.isArray(v) ? v[i] : null; return known(k, id) ? id : null })
+const isTier = (v: unknown): v is Tier => v === 1 || v === 2 || v === 3
 /** Accepts whatever was saved and returns a valid deck (unknown cards become empty slots, no duplicates). */
 export function sanitize(d: unknown): DeckState {
   const o = (d && typeof d === 'object' ? d : {}) as Record<string, unknown>
   const dedupe = (a: (string | null)[]) => a.map((x, i) => (x && a.indexOf(x) !== i ? null : x))
+  const tiers = o.tiers && typeof o.tiers === 'object' ? Object.fromEntries(Object.entries(o.tiers as Record<string, unknown>).filter(([, v]) => isTier(v))) as Record<string, Tier> : {}
+  const off = o.skillsOff && typeof o.skillsOff === 'object' ? Object.fromEntries(Object.entries(o.skillsOff as Record<string, unknown>).filter(([, v]) => Array.isArray(v)).map(([k, v]) => [k, (v as unknown[]).filter((x): x is string => typeof x === 'string')])) : {}
   return {
     hero: known('heroes', o.hero) ? o.hero : null, spells: dedupe(slots('spells', o.spells, 3)), towers: dedupe(slots('towers', o.towers, 4)),
-    tier: o.tier === 1 || o.tier === 2 || o.tier === 3 ? o.tier : 3,
-    skills: o.skills && typeof o.skills === 'object' ? (o.skills as Record<string, string[]>) : {}, perks: o.perks !== false,
+    tier: isTier(o.tier) ? o.tier : 3, tiers, skillsOff: off, perks: o.perks !== false, perHit: o.perHit !== false,
   }
 }
-const KEY = 'krb-decks-v3'
+const KEY = 'krb-decks-v4'
 export const loadDecks = (): Record<number, DeckState> => {
   try { const raw = JSON.parse(localStorage.getItem(KEY) ?? '{}') as Record<string, unknown>; return Object.fromEntries(Object.entries(raw).map(([k, v]) => [+k, sanitize(v)])) } catch { return {} }
 }

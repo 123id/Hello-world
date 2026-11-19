@@ -17,6 +17,12 @@ export interface TierDef {
   units: number | null; unitHp: number | null; unitArmor: number | null
 }
 
+/** How to turn a skill into damage per second (used by the deck builder; the fight simulator uses the simpler fields below). */
+export type SkillCalc =
+  | { type: 'cast'; cooldown: number | number[]; dmgAvg: number; strikes: number; chance: number } // `number[]` = one value per tower level
+  | { type: 'dot'; dps: number | number[]; duration: number | number[]; cooldown?: number } // no cooldown = applied by the tower's attacks, always on
+  | { type: 'summon'; units: number; dmgAvg: number; interval: number; cooldown: number; duration: number | null }
+
 export interface SkillDef {
   id: string; name: string
   kind: 'periodic' | 'dot' | 'other'
@@ -24,6 +30,8 @@ export interface SkillDef {
   why?: string // why it is not simulated
   cost: number | null // gold to buy
   cooldown?: number; dmgAvg?: number; aoe?: number; dps?: number; duration?: number
+  calc: SkillCalc | null // null: the library has no usable damage numbers (see calcWhy)
+  calcWhy?: string
 }
 
 export interface PerkDef { name: string; stat: string | null; target: string | null; pct: number | null; inferred?: boolean }
@@ -55,12 +63,13 @@ export interface HeroDef {
 
 export interface SpellDef {
   id: string; name: string; rarity: string | null
-  kind: 'strike' | 'zone' | 'buff' | 'other'
+  kind: 'strike' | 'zone' | 'buff' | 'summon' | 'other'
   cooldown: number
   aoe: number
   hits: number; dmgMin: number; dmgMax: number // strike
   dpsAvg: number; duration: number; slowPct: number // zone (duration also used by buff)
   buffDmgPct: number; buffRangePct: number; buffTowers: number // buff (Royal Edict)
+  summon: { units: number; dmgAvg: number; interval: number; duration: number } | null // summon spells (Reinforcements, Fallen Order)
   perks: PerkDef[]
   issues: string[]; selectable: boolean
 }
@@ -105,9 +114,38 @@ function fillPerks(all: PerkDef[][]): void {
   }
 }
 
+function calcOf(s: Raw): { calc: SkillCalc | null; calcWhy?: string } {
+  if (s.scope !== 'boss') return { calc: null, calcWhy: `scope: ${s.scope}` }
+  const dmin = num(s.damageMin), dmax = num(s.damageMax)
+  const cdTier = Array.isArray(s.cooldownByTierSec) && s.cooldownByTierSec.length === 3 ? (s.cooldownByTierSec as number[]) : null
+  const cd = cdTier ?? num(s.cooldownSec)
+
+  if (s.kind === 'summon') {
+    const units = num(s.units), umin = num(s.unitDamageMin), umax = num(s.unitDamageMax), iv = num(s.unitAttackIntervalSec), c = num(s.cooldownSec)
+    const miss = [units === null && 'unit count', umin === null && 'unit damage', iv === null && 'unit attack speed', c === null && 'cooldown'].filter(Boolean)
+    if (miss.length) return { calc: null, calcWhy: `the library has no ${miss.join(', ')} for this summon` }
+    return { calc: { type: 'summon', units: units!, dmgAvg: avg(umin!, umax ?? umin!), interval: iv!, cooldown: c!, duration: num(s.durationSec) } }
+  }
+  if (s.kind === 'dot') {
+    if (Array.isArray(s.byTier) && s.byTier.length === 3 && (s.byTier as Raw[]).every((t) => num(t.dpsMin) !== null && num(t.dpsMax) !== null && num(t.durationSec) !== null)) {
+      const t = s.byTier as Raw[]
+      return { calc: { type: 'dot', dps: t.map((x) => avg(x.dpsMin, x.dpsMax)), duration: t.map((x) => x.durationSec as number), cooldown: num(s.cooldownSec) ?? undefined } }
+    }
+    if (num(s.dpsMin) !== null && num(s.dpsMax) !== null && num(s.durationSec)) {
+      return { calc: { type: 'dot', dps: avg(s.dpsMin, s.dpsMax), duration: s.durationSec, cooldown: num(s.cooldownSec) ?? undefined } }
+    }
+    return { calc: null, calcWhy: 'the library has no damage per second or duration for this damage-over-time skill' }
+  }
+  if (dmin !== null && dmax !== null) {
+    if (!cd) return { calc: null, calcWhy: 'damage is listed but the library has no cooldown (it may trigger by chance)' }
+    return { calc: { type: 'cast', cooldown: cd, dmgAvg: avg(dmin, dmax), strikes: num(s.strikes) ?? 1, chance: (num(s.chancePct) ?? 100) / 100 } }
+  }
+  return { calc: null, calcWhy: `a ${s.kind ?? 'unknown'} skill with no damage number` }
+}
+
 function skillsOf(card: Raw): SkillDef[] {
   return ((card.skills ?? []) as Raw[]).map((s): SkillDef => {
-    const base = { id: String(s.id), name: String(s.name ?? s.id), cost: num(s.purchaseCost) }
+    const base = { id: String(s.id), name: String(s.name ?? s.id), cost: num(s.purchaseCost), ...calcOf(s) }
     if (s.scope !== 'boss') return { ...base, kind: 'other', supported: false, why: `scope: ${s.scope}` }
     const cd = num(s.cooldownSec), dmin = num(s.damageMin), dmax = num(s.damageMax)
     if (s.kind === 'periodicDamage' && cd && dmin !== null && dmax !== null) {
@@ -170,7 +208,9 @@ function buildHeroes(): HeroDef[] {
 }
 
 function buildSpells(): SpellDef[] {
-  return [...(raw.spells as Raw[]), ...(raw.heroes as Raw[]).filter((c) => MISFILED_SPELLS.has(c.id))].map((c): SpellDef => {
+  return [...(raw.spells as Raw[]), ...(raw.heroes as Raw[]).filter((c) => MISFILED_SPELLS.has(c.id))].map((card): SpellDef => {
+    // a spell the library filed as a hero keeps its numbers in its single skill
+    const c: Raw = MISFILED_SPELLS.has(card.id) && card.skills?.[0] ? { ...card, ...card.skills[0], id: card.id, name: card.name, perks: card.perks, rarity: card.rarity } : card
     const cd = num(c.cooldownSec)
     const issues: string[] = []
     let kind: SpellDef['kind'] = 'other'
@@ -178,13 +218,15 @@ function buildSpells(): SpellDef[] {
     if (c.kind === 'spellDamage' && dmin !== null && dmax !== null && cd) kind = 'strike'
     else if (c.kind === 'spellDamage' && pmin !== null && pmax !== null && dur && cd) kind = 'zone'
     else if (c.kind === 'spellBuff' && num(c.buffDamagePct) !== null && dur && cd) kind = 'buff'
+    else if ((c.kind === 'spellSummon' || c.kind === 'summon') && num(c.units) && num(c.unitDamageMin) !== null && num(c.unitAttackIntervalSec) && dur && cd) kind = 'summon'
     else issues.push(c.kind === 'spellDamage' ? 'damage or duration missing in library' : `${c.kind ?? (MISFILED_SPELLS.has(c.id) ? 'summon' : 'unknown')} spell not simulated yet`)
     return {
       id: c.id, name: c.name, rarity: c.rarity ?? null, kind, cooldown: cd ?? 0, aoe: num(c.aoe) ?? 80,
       hits: num(c.hits) ?? 1, dmgMin: dmin ?? 0, dmgMax: dmax ?? 0,
       buffDmgPct: num(c.buffDamagePct) ?? 0, buffRangePct: num(c.buffRangePct) ?? 0, buffTowers: num(c.affectedTowers) ?? 4,
       dpsAvg: pmin !== null && pmax !== null ? avg(pmin, pmax) : 0, duration: dur ?? 0, slowPct: num(c.slowPct) ?? 0,
-      perks: perksOf(c), issues, selectable: issues.length === 0,
+      summon: kind === 'summon' ? { units: num(c.units)!, dmgAvg: avg(num(c.unitDamageMin)!, num(c.unitDamageMax) ?? num(c.unitDamageMin)!), interval: num(c.unitAttackIntervalSec)!, duration: dur! } : null,
+      perks: perksOf(card), issues: kind === 'summon' ? [] : issues, selectable: issues.length === 0,
     }
   })
 }

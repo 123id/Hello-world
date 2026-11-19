@@ -1,7 +1,7 @@
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { BOSS_ENTERS_SEC, BOSS_KW as BOSS, CREEP_SETS } from './data/kingdomwars'
 import type { CardKind } from './data/icons'
-import { deckDps, type DeckInput } from './sim/dps'
+import { deckDps, towerTierOf, type DeckInput } from './sim/dps'
 import { simulate, type Build, type Placement } from './sim/engine'
 import { dpsAt } from './sim/explorer'
 import { pointAt } from './sim/geometry'
@@ -13,7 +13,7 @@ import { DeckBuilder, type TierRow } from './ui/DeckBuilder'
 import { Gold } from './ui/icons'
 import { Results } from './ui/Results'
 import {
-  DEFAULT_DECK, MAP, PATH, autoPlace, classOfHero, classOfTower, emptyDeck, emptySpots, fmt, goldOf, loadDecks, nearestOnRoute, saveDecks,
+  DEFAULT_DECK, MAP, PATH, autoPlace, classOfHero, classOfTower, emptyDeck, emptySpots, fmt, goldOf, loadDecks, nearestOnRoute, placed, saveDecks,
   type DeckState, type Placing, type Spot, type Spots,
 } from './ui/state'
 import type { DmgClass } from './ui/icons'
@@ -30,28 +30,41 @@ export function App() {
 
   const listFor = (kind: Kind, d: DeckState) => (kind === 'heroes' ? [d.hero] : kind === 'spells' ? d.spells : d.towers)
   const withList = (d: DeckState, kind: Kind, list: (string | null)[]): DeckState => (kind === 'heroes' ? { ...d, hero: list[0] } : kind === 'spells' ? { ...d, spells: list } : { ...d, towers: list })
-  /** Put a card (or nothing) into a slot; a card already in the deck moves, swapping with whatever was in the target slot. */
-  const place = (kind: Kind, index: number, id: string | null) => {
-    const list = [...listFor(kind, deck)]
-    if (id) { const from = list.indexOf(id); if (from >= 0 && from !== index) list[from] = list[index] }
-    list[index] = id
-    setDeck(withList(deck, kind, list))
-  }
+  const place = (kind: Kind, index: number, id: string | null) => setDeck(placed(deck, kind, index, id))
   const swap = (kind: Kind, a: number, b: number) => { const list = [...listFor(kind, deck)]; [list[a], list[b]] = [list[b], list[a]]; setDeck(withList(deck, kind, list)) }
+  /** Skills all count by default; this switches one off (or back on). */
   const toggleSkill = (towerId: string, skillId: string) => {
-    const cur = deck.skills[towerId] ?? []
-    setDeck({ ...deck, skills: { ...deck.skills, [towerId]: cur.includes(skillId) ? cur.filter((x) => x !== skillId) : [...cur, skillId] } })
+    const off = deck.skillsOff[towerId] ?? []
+    setDeck({ ...deck, skillsOff: { ...deck.skillsOff, [towerId]: off.includes(skillId) ? off.filter((x) => x !== skillId) : [...off, skillId] } })
   }
 
   const hero = deck.hero ? heroById(deck.hero) ?? null : null
   const spells = deck.spells.map((id) => (id ? spellById(id) ?? null : null))
   const towers = deck.towers.map((id) => (id ? towerById(id) ?? null : null))
-  const deckInput = (tier: Tier): DeckInput => ({ hero, spells, towers, tier, skills: deck.skills, perks: deck.perks })
-  const ideal = useMemo(() => deckDps(deckInput(deck.tier), BOSS.hp), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
+  const inputOf = (d: DeckState, allAt?: Tier): DeckInput => ({
+    hero: d.hero ? heroById(d.hero) ?? null : null,
+    spells: d.spells.map((id) => (id ? spellById(id) ?? null : null)),
+    towers: d.towers.map((id) => (id ? towerById(id) ?? null : null)),
+    tier: allAt ?? d.tier, tiers: allAt ? {} : d.tiers, skillsOff: d.skillsOff, perks: d.perks, perHit: d.perHit,
+  })
+  const ideal = useMemo(() => deckDps(inputOf(deck), BOSS.hp), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
   const tierRows: TierRow[] = useMemo(() => ([1, 2, 3] as Tier[]).map((t) => {
-    const r = deckDps(deckInput(t), BOSS.hp)
+    const r = deckDps(inputOf(deck, t), BOSS.hp)
     return { tier: t, dps: r.total, perMin: r.perMin, gold: r.gold, unknown: r.unknownCosts, kill: r.idealKill }
   }), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
+  const evalDeck = (d: DeckState) => deckDps(inputOf(d), BOSS.hp).total
+
+  // how the deck's power just changed (shown for a few seconds beside the DPS)
+  const lastTotal = useRef<number | null>(null)
+  const [delta, setDelta] = useState<number | null>(null)
+  useEffect(() => {
+    const prev = lastTotal.current
+    lastTotal.current = ideal.total
+    if (prev === null || Math.abs(ideal.total - prev) < 1) return
+    setDelta(ideal.total - prev)
+    const t = window.setTimeout(() => setDelta(null), 3500)
+    return () => window.clearTimeout(t)
+  }, [ideal.total])
 
   // ---- the battle (step 2) --------------------------------------------------------------------
   const [step, setStep] = useState<'deck' | 'battle'>('deck')
@@ -78,9 +91,11 @@ export function App() {
   const placements: Placement[] = useMemo(() => MAP.spots.flatMap((sp) => {
     const st = spots[sp.id]
     const tower = st?.towerId ? deckTowers.find((t) => t.id === st.towerId) : undefined
-    if (!tower || !tower.tiers[deck.tier]) return []
-    return [{ spotId: sp.id, tower, tier: deck.tier, skills: deck.tier === 3 ? deck.skills[tower.id] ?? [] : [], rally: tower.kind === 'barracks' ? (st.rally ?? nearestOnRoute(sp)) : undefined }]
-  }), [spots, deck.towers.join(), deck.tier, deck.skills]) // eslint-disable-line react-hooks/exhaustive-deps
+    const tier = tower ? towerTierOf(deck, tower) : 3
+    if (!tower || !tower.tiers[tier]) return []
+    const skills = tier === 3 ? tower.skills.filter((k) => k.supported && !(deck.skillsOff[tower.id] ?? []).includes(k.id)).map((k) => k.id) : []
+    return [{ spotId: sp.id, tower, tier, skills, rally: tower.kind === 'barracks' ? (st.rally ?? nearestOnRoute(sp)) : undefined }]
+  }), [spots, deck.towers.join(), deck.tier, deck.tiers, deck.skillsOff]) // eslint-disable-line react-hooks/exhaustive-deps
 
   const perkLists = useMemo(() => (deck.perks ? [...(hero ? hero.perks : []), ...spellCards.flatMap((s) => s.perks), ...deckTowers.flatMap((t) => t.perks)] : []), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
   const mods = useMemo(() => collectMods([perkLists]), [perkLists])
@@ -117,7 +132,7 @@ export function App() {
   return (
     <div className="app">
       <header className="stats">
-        <div><b>{fmt(head.dps)}</b><span>DPS</span></div>
+        <div><b>{fmt(head.dps)}</b><span>DPS{step === 'deck' && delta !== null && <i className={'delta ' + (delta > 0 ? 'up' : 'down')}>{delta > 0 ? '▲' : '▼'} {fmt(Math.abs(delta))}</i>}</span></div>
         <div><b>{fmt(head.perMin)}</b><span>DAMAGE / MIN</span></div>
         <div><b><Gold n={head.gold} plus={head.unknown > 0} size={20} /></b><span>GOLD</span></div>
         <div><b>{head.killText}</b><span>{head.killLabel}</span></div>
@@ -135,10 +150,11 @@ export function App() {
         {step === 'deck' ? (
           <DeckBuilder
             deck={deck} dps={ideal} slot={slot} onSlot={setSlot}
-            onClear={() => setDeck({ ...emptyDeck(), tier: deck.tier, perks: deck.perks })} onReset={() => setDeck(DEFAULT_DECK)}
+            onClear={() => setDeck({ ...emptyDeck(), tier: deck.tier, perks: deck.perks, perHit: deck.perHit })} onReset={() => setDeck(DEFAULT_DECK)}
             onPlace={place} onSwap={swap}
-            onTier={(t) => setDeck({ ...deck, tier: t })} onPerks={(on) => setDeck({ ...deck, perks: on })} onToggleSkill={toggleSkill}
-            tiers={tierRows} goBattle={goBattle}
+            onTier={(t) => setDeck({ ...deck, tier: t, tiers: {} })} onTowerTier={(id, t) => setDeck({ ...deck, tiers: { ...deck.tiers, [id]: t } })}
+            onPerks={(on) => setDeck({ ...deck, perks: on })} onPerHit={(on) => setDeck({ ...deck, perHit: on })} onToggleSkill={toggleSkill}
+            evalDeck={evalDeck} tiers={tierRows} goBattle={goBattle}
           />
         ) : (
           <>
