@@ -59,12 +59,11 @@ export interface DeckState {
   skillsOff: Record<string, string[]> // skills of a tower that are switched off; every skill counts by default
   perks: boolean // apply the deck's perks to the numbers
   perHit: boolean // multi-hit skills and spells: the listed damage is per hit (× number of hits) rather than per cast
-  percentHp: boolean // count Polymorph (a share of the boss's max health) as damage
 }
-export const emptyDeck = (): DeckState => ({ hero: null, spells: [null, null, null], towers: [null, null, null, null], tier: 3, tiers: {}, skillsOff: {}, perks: true, perHit: true, percentHp: true })
+export const emptyDeck = (): DeckState => ({ hero: null, spells: [null, null, null], towers: [null, null, null, null], tier: 3, tiers: {}, skillsOff: {}, perks: true, perHit: true })
 export const DEFAULT_DECK: DeckState = {
   hero: 'alric', spells: ['royal-edict', 'ultimate-strike', 'thunderbolt'],
-  towers: ['genies-domains', 'witches-coven', 'crimson-manor', 'twilight-longbow'], tier: 3, tiers: {}, skillsOff: {}, perks: true, perHit: true, percentHp: true,
+  towers: ['genies-domains', 'witches-coven', 'crimson-manor', 'twilight-longbow'], tier: 3, tiers: {}, skillsOff: {}, perks: true, perHit: true,
 }
 type ListKind = 'heroes' | 'spells' | 'towers'
 export const listOfDeck = (d: DeckState, kind: ListKind): (string | null)[] => (kind === 'heroes' ? [d.hero] : kind === 'spells' ? d.spells : d.towers)
@@ -87,7 +86,7 @@ export function sanitize(d: unknown): DeckState {
   const off = o.skillsOff && typeof o.skillsOff === 'object' ? Object.fromEntries(Object.entries(o.skillsOff as Record<string, unknown>).filter(([, v]) => Array.isArray(v)).map(([k, v]) => [k, (v as unknown[]).filter((x): x is string => typeof x === 'string')])) : {}
   return {
     hero: known('heroes', o.hero) ? o.hero : null, spells: dedupe(slots('spells', o.spells, 3)), towers: dedupe(slots('towers', o.towers, 4)),
-    tier: isTier(o.tier) ? o.tier : 3, tiers, skillsOff: off, perks: o.perks !== false, perHit: o.perHit !== false, percentHp: o.percentHp !== false,
+    tier: isTier(o.tier) ? o.tier : 3, tiers, skillsOff: off, perks: o.perks !== false, perHit: o.perHit !== false,
   }
 }
 const KEY = 'krb-decks-v4'
