@@ -1,456 +1,499 @@
 {
  "spells:ultimate-strike": {
   "file": "icons/spells-ultimate-strike.png",
-  "w": 264,
-  "h": 280,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "towers:elephant-stompguard": {
   "file": "icons/towers-elephant-stompguard.png",
-  "w": 196,
-  "h": 214,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:asra": {
   "file": "icons/heroes-asra.png",
-  "w": 148,
-  "h": 158,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:holy-sanctuary": {
   "file": "icons/towers-holy-sanctuary.png",
-  "w": 100,
-  "h": 106,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:king-malik": {
   "file": "icons/heroes-king-malik.png",
-  "w": 146,
-  "h": 158,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:witches-coven": {
   "file": "icons/towers-witches-coven.png",
-  "w": 174,
-  "h": 186,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:battle-mecha": {
   "file": "icons/towers-battle-mecha.png",
-  "w": 242,
-  "h": 250,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:musketeer-garrison": {
   "file": "icons/towers-musketeer-garrison.png",
-  "w": 191,
-  "h": 194,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "spells:rain-of-fire": {
   "file": "icons/spells-rain-of-fire.png",
-  "w": 218,
-  "h": 232,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "heroes:aegion-brightsteel": {
   "file": "icons/heroes-aegion-brightsteel.png",
-  "w": 163,
-  "h": 160,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "spells:reinforcements": {
   "file": "icons/spells-reinforcements.png",
-  "w": 104,
-  "h": 111,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "spells:cursed-vines": {
   "file": "icons/spells-cursed-vines.png",
-  "w": 146,
-  "h": 160,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "spells:thunderbolt": {
   "file": "icons/spells-thunderbolt.png",
-  "w": 173,
-  "h": 203,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "towers:twilight-longbow": {
   "file": "icons/towers-twilight-longbow.png",
-  "w": 243,
-  "h": 266,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:alric": {
   "file": "icons/heroes-alric.png",
-  "w": 97,
-  "h": 111,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:drakkan": {
   "file": "icons/heroes-drakkan.png",
-  "w": 97,
-  "h": 106,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:bonehart": {
   "file": "icons/heroes-bonehart.png",
-  "w": 101,
-  "h": 104,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:crimson-manor": {
   "file": "icons/towers-crimson-manor.png",
-  "w": 102,
-  "h": 104,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:cursed-altar": {
   "file": "icons/towers-cursed-altar.png",
-  "w": 102,
-  "h": 104,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:assassins": {
   "file": "icons/towers-assassins.png",
-  "w": 157,
-  "h": 166,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:blazing-gem": {
   "file": "icons/towers-blazing-gem.png",
-  "w": 204,
-  "h": 211,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:arcane-wizard": {
   "file": "icons/towers-arcane-wizard.png",
-  "w": 204,
-  "h": 215,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:alleria-and-wildfang": {
   "file": "icons/heroes-alleria-and-wildfang.png",
-  "w": 201,
-  "h": 217,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:ashbite": {
   "file": "icons/heroes-ashbite.png",
-  "w": 184,
-  "h": 195,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:denas-bastion": {
   "file": "icons/towers-denas-bastion.png",
-  "w": 220,
-  "h": 225,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:beresad": {
   "file": "icons/heroes-beresad.png",
-  "w": 227,
-  "h": 239,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "towers:vampires": {
-  "file": "icons/towers-crimson-manor.png",
-  "w": 102,
-  "h": 104,
-  "shape": "rect"
+  "file": "icons/towers-vampires.png",
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:phoenix": {
   "file": "icons/heroes-phoenix.png",
-  "w": 96,
-  "h": 103,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:eiskalt": {
   "file": "icons/heroes-eiskalt.png",
-  "w": 99,
-  "h": 106,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:dierdre": {
   "file": "icons/heroes-dierdre.png",
-  "w": 156,
-  "h": 166,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:lord-veznan": {
   "file": "icons/heroes-lord-veznan.png",
-  "w": 154,
-  "h": 152,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:raelyn": {
   "file": "icons/heroes-raelyn.png",
-  "w": 154,
-  "h": 153,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:hacksaw": {
   "file": "icons/heroes-hacksaw.png",
-  "w": 156,
-  "h": 155,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:ingvar-bearclaw": {
   "file": "icons/heroes-ingvar-bearclaw.png",
-  "w": 201,
-  "h": 216,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "spells:fallen-order": {
   "file": "icons/spells-fallen-order.png",
-  "w": 166,
-  "h": 182,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "towers:sandworm-hollow": {
   "file": "icons/towers-sandworm-hollow.png",
-  "w": 212,
-  "h": 213,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "spells:swarm-of-locusts": {
   "file": "icons/spells-swarm-of-locusts.png",
-  "w": 196,
-  "h": 212,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "spells:teleport": {
   "file": "icons/spells-teleport.png",
-  "w": 190,
-  "h": 204,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "heroes:vesper": {
   "file": "icons/heroes-vesper.png",
-  "w": 149,
-  "h": 158,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "heroes:magnus-spellbane": {
   "file": "icons/heroes-magnus-spellbane.png",
-  "w": 240,
-  "h": 297,
-  "shape": "rect"
+  "w": 160,
+  "h": 190,
+  "shape": "rect",
+  "level": 9
  },
  "spells:solar-blast": {
   "file": "icons/spells-solar-blast.png",
-  "w": 268,
-  "h": 293,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "spells:polymorph": {
   "file": "icons/spells-polymorph.png",
-  "w": 265,
-  "h": 290,
-  "shape": "hex"
+  "w": 160,
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  },
  "spells:wrath-of-blackburn": {
   "file": "icons/spells-wrath-of-blackburn.png",
   "w": 160,
-  "h": 168,
+  "h": 184,
   "shape": "hex",
-  "fromGameVideo": true
+  "level": 9
  },
  "heroes:alleria-swiftwind": {
   "file": "icons/heroes-alleria-swiftwind.png",
   "w": 160,
-  "h": 172,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "heroes:elora-wintersong": {
   "file": "icons/heroes-elora-wintersong.png",
   "w": 160,
-  "h": 172,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "heroes:gerald-lightseeker": {
   "file": "icons/heroes-gerald-lightseeker.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "heroes:grawl": {
   "file": "icons/heroes-grawl.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "spells:icy-zone": {
   "file": "icons/spells-icy-zone.png",
   "w": 160,
-  "h": 176,
+  "h": 184,
   "shape": "hex",
-  "fromGameVideo": true
+  "level": 9
  },
  "spells:lightning-stun": {
   "file": "icons/spells-lightning-stun.png",
   "w": 160,
-  "h": 151,
+  "h": 184,
   "shape": "hex",
-  "fromGameVideo": true
+  "level": 9
  },
  "spells:oasis-mirage": {
   "file": "icons/spells-oasis-mirage.png",
   "w": 160,
-  "h": 146,
+  "h": 184,
   "shape": "hex",
-  "fromGameVideo": true
+  "level": 9
  },
  "spells:royal-edict": {
   "file": "icons/spells-royal-edict.png",
   "w": 160,
-  "h": 149,
+  "h": 184,
   "shape": "hex",
-  "fromGameVideo": true
+  "level": 9
  },
  "spells:sabotage": {
   "file": "icons/spells-sabotage.png",
   "w": 160,
-  "h": 140,
+  "h": 184,
   "shape": "hex",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:archer-tower": {
   "file": "icons/towers-archer-tower.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:archery-scouts": {
   "file": "icons/towers-archery-scouts.png",
   "w": 160,
-  "h": 165,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:archmage": {
   "file": "icons/towers-archmage.png",
   "w": 160,
-  "h": 172,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:barbarian-mead-hall": {
   "file": "icons/towers-barbarian-mead-hall.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:crossbow-fort": {
   "file": "icons/towers-crossbow-fort.png",
   "w": 160,
-  "h": 172,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:dwaarp": {
   "file": "icons/towers-dwaarp.png",
   "w": 160,
-  "h": 172,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:dwarven-artillery": {
   "file": "icons/towers-dwarven-artillery.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:genies-domains": {
   "file": "icons/towers-genies-domains.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:glacial-druid": {
   "file": "icons/towers-glacial-druid.png",
   "w": 160,
-  "h": 164,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:hunter-outpost": {
   "file": "icons/towers-hunter-outpost.png",
   "w": 160,
-  "h": 167,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:mage-tower": {
   "file": "icons/towers-mage-tower.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:necromancer": {
   "file": "icons/towers-necromancer.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:paladin-barracks": {
   "file": "icons/towers-paladin-barracks.png",
   "w": 160,
-  "h": 172,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:rangers-hideout": {
   "file": "icons/towers-rangers-hideout.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:rocket-gunners": {
   "file": "icons/towers-rocket-gunners.png",
   "w": 160,
-  "h": 172,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:royal-archers": {
   "file": "icons/towers-royal-archers.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:sorcerer-mage": {
   "file": "icons/towers-sorcerer-mage.png",
   "w": 160,
-  "h": 173,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "towers:tesla-x104": {
   "file": "icons/towers-tesla-x104.png",
   "w": 160,
-  "h": 168,
+  "h": 190,
   "shape": "rect",
-  "fromGameVideo": true
+  "level": 9
  },
  "spells:merchants": {
   "file": "icons/spells-merchants.png",
   "w": 160,
-  "h": 174,
-  "shape": "hex"
+  "h": 184,
+  "shape": "hex",
+  "level": 9
  }
 }

@@ -181,7 +181,7 @@ export function DeckBuilder(p: Props) {
     const pill = pillFor(kind, id)
     return (
       <DragCard key={dropId} kind={kind} id={id} src={{ where: 'deck', index }} dropId={dropId} pill={pill.text} tone={pill.tone} cls={clsOf(kind, id)}
-        tag={kind === 'towers' ? `LVL${tierOf(id)}` : undefined}
+        tag={kind === 'towers' ? `T${tierOf(id)}` : undefined}
         selected={sel?.kind === kind && sel.index === index} drag={drag} setDrag={setDrag}
         onTap={(anchor) => setPop({ kind, id, anchor })} onDropTo={(t) => dropOn({ where: 'deck', index }, kind, id, t)} />
     )
@@ -285,7 +285,7 @@ export function DeckBuilder(p: Props) {
               const taken = inDeck(kind, c.id), pill = pillFor(kind, c.id)
               return (
                 <DragCard key={c.id} kind={kind} id={c.id} src={{ where: 'coll' }} pill={pill.text} tone={pill.tone} cls={clsOf(kind, c.id)}
-                  tag={kind === 'towers' ? `LVL${tierOf(c.id)}` : undefined}
+                  tag={kind === 'towers' ? `T${tierOf(c.id)}` : undefined}
                   dim={taken} badge={taken ? { text: '✓', title: 'in your deck' } : c.flag ? { text: '!', title: c.flag, tone: 'warn' } : undefined}
                   drag={drag} setDrag={setDrag} onTap={(anchor) => setPop({ kind, id: c.id, anchor })} onDropTo={(t) => dropOn({ where: 'coll' }, kind, c.id, t)} />
               )

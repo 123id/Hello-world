@@ -69,7 +69,7 @@ export const ICON_FILES: Record<string, string> = {
   'towers:sorcerer-mage': 'icons/towers-sorcerer-mage.png',
   'towers:tesla-x104': 'icons/towers-tesla-x104.png',
   'towers:twilight-longbow': 'icons/towers-twilight-longbow.png',
-  'towers:vampires': 'icons/towers-crimson-manor.png',
+  'towers:vampires': 'icons/towers-vampires.png',
   'towers:witches-coven': 'icons/towers-witches-coven.png',
 }
 
