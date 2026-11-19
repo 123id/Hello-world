@@ -37,7 +37,7 @@ describe('library adapter', () => {
     expect(heroById('wrath-of-blackburn')).toBeUndefined()
     const w = spellById('wrath-of-blackburn')!
     expect(w.kind).toBe('summon') // a summon spell, with its numbers read from its one skill
-    expect(w.summon).toEqual({ units: 1, dmgAvg: 1261.5, interval: 1.9, duration: 13 })
+    expect(w.summon).toEqual({ units: 1, dmgAvg: 2187, interval: 1.9, duration: 13 })
     const g = heroById('gerald-lightseeker')!
     expect(g.respawn).toBe(15)
     expect(g.respawnAssumed).toBe(false)

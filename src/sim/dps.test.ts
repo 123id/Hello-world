@@ -127,10 +127,40 @@ describe('heroes and spells', () => {
   it("Royal Edict adds a share of the best towers' DPS", () => {
     expect(spellDps(spellById('royal-edict')!, m, [1000, 500, 100, 50, 10]).dps).toBeCloseTo((1000 + 500 + 100 + 50) * 0.38 * (12 / 37), 6)
   })
-  it('Wrath of Blackburn (a summon spell): 1 unit of 1,009–1,514 every 1.9 s, alive 13 of every 21 s', () => {
-    expect(spellDps(spellById('wrath-of-blackburn')!, m).dps).toBeCloseTo((1261.5 / 1.9) * (13 / 21), 6)
+  it('Wrath of Blackburn (a summon spell): 1 unit of 2,019–2,355 every 1.9 s, alive 13 of every 21 s', () => {
+    expect(spellDps(spellById('wrath-of-blackburn')!, m).dps).toBeCloseTo((2187 / 1.9) * (13 / 21), 6)
   })
   it('utility spells have no DPS', () => { expect(spellDps(spellById('polymorph')!, m).dps).toBeNull() })
+})
+
+describe('facts read from the game videos', () => {
+  it('Archery Scouts is a barracks tower with 2 soldiers, so its DPS counts both', () => {
+    const sc = T('archery-scouts'), t3 = sc.tiers[3]!
+    expect(sc.kind).toBe('barracks'); expect(t3.units).toBe(2)
+    expect([1, 2, 3].map((t) => sc.tiers[t as 1 | 2 | 3]!.cost)).toEqual([70, 160, 270])
+    const soldiers = towerDps(sc, 3, ['critical-hit', 'fire-shots', 'target-practice'], m).parts[0]
+    expect(soldiers.dps).toBeCloseTo((2 * ((t3.dmgMin + t3.dmgMax) / 2)) / t3.interval, 6)
+    expect(soldiers.detail).toMatch(/^2 soldiers ×/)
+  })
+  it("Fire Shots now has its 6 s duration, so it counts (always on: applied by every attack)", () => {
+    const fs = T('archery-scouts').skills.find((s) => s.id === 'fire-shots')!
+    expect(fs.calc).toEqual({ type: 'dot', dps: 146, duration: 6, cooldown: undefined })
+    expect(skillDps(fs, ctx).part!.dps).toBe(146)
+  })
+  it('Denas Bastion has a complete level 3 now and is flagged as read at card level 10', () => {
+    const d = T('denas-bastion')
+    expect(d.selectable, d.issues.join('; ')).toBe(true)
+    expect(d.dataLevel).toBe(10)
+    expect(d.tiers[3]).toMatchObject({ dmgMin: 658, dmgMax: 774, units: 3, interval: 1.2, unitHp: 4248, cost: 290 })
+    expect(towerDps(d, 3, [], m).parts[0].dps).toBeCloseTo((3 * 716) / 1.2, 6)
+  })
+  it("Wrath of Blackburn's soul hits for 2,019–2,355 every 1.9 s (card level 9 in the video)", () => {
+    expect(spellById('wrath-of-blackburn')!.summon).toEqual({ units: 1, dmgAvg: 2187, interval: 1.9, duration: 13 })
+  })
+  it('Polymorph lasts 6 s over 80 units, but is still a utility spell with no DPS', () => {
+    const p = spellById('polymorph')!
+    expect(p.duration).toBe(6); expect(p.aoe).toBe(80); expect(spellDps(p, m).dps).toBeNull()
+  })
 })
 
 describe('whole deck', () => {
