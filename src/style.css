@@ -203,3 +203,12 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
 .bottomnav button.on img { height: 50px; }
 .bottomnav button.on span { color: #fff; font-size: .95rem; text-shadow: -1.5px -1.5px 0 #3a1c08, 1.5px -1.5px 0 #3a1c08, -1.5px 1.5px 0 #3a1c08, 1.5px 1.5px 0 #3a1c08; }
 .inostats { font-family: var(--body); text-align: center; color: #5a6a82; background: #e6eef3; border-radius: 12px; padding: 14px 10px; margin: 10px 0; font-size: .9rem; }
+
+.bonusrow { display: flex; align-items: center; gap: 10px; padding: 7px 0; border-top: 1px solid #2c5fb0; }
+.bonusrow.off { opacity: .6; }
+.bname { flex: 1; min-width: 0; display: flex; flex-direction: column; font-size: .95rem; }
+.bname small { font-family: var(--body); color: var(--mut); font-size: .72rem; line-height: 1.25; }
+.bgain { color: var(--mut); font-size: .85rem; white-space: nowrap; }
+.bgain.up { color: var(--green); }
+.bonusoff { margin-top: 6px; font-family: var(--body); font-size: .8rem; color: var(--mut); }
+.bonusoff summary { cursor: pointer; padding: 6px 0; }

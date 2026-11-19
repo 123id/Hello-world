@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { createPortal } from 'react-dom'
 import type { CardKind } from '../data/icons'
-import { heroDps, skillDps, spellDps, towerDps, towerSkillCtx, type CardDps, type DeckDps } from '../sim/dps'
+import { heroDps, skillDps, spellDps, towerDps, towerSkillCtx, type CardDps, type DeckDps, type PerkGain } from '../sim/dps'
 import { LIBRARY, heroById, spellById, towerById, type Tier } from '../sim/library'
 import { Card, Icon, Sheet } from './common'
 import { useLongPressDrag } from './drag'
@@ -22,7 +22,8 @@ interface Props {
   onPlace: (kind: Kind, index: number, id: string | null) => void
   onSwap: (kind: Kind, a: number, b: number) => void
   onTier: (t: Tier) => void; onTowerTier: (towerId: string, t: Tier) => void
-  onPerks: (on: boolean) => void; onPerHit: (on: boolean) => void
+  onPerks: (on: boolean) => void; onPerHit: (on: boolean) => void; onPercentHp: (on: boolean) => void
+  gains: PerkGain[]
   onToggleSkill: (towerId: string, skillId: string) => void
   evalDeck: (d: DeckState) => number
   tiers: TierRow[]; goBattle: () => void
@@ -109,7 +110,7 @@ export function DeckBuilder(p: Props) {
   const towerList = dps.towers.map((t) => t?.dps ?? 0)
   const cardInfo = (kind: Kind, id: string, tier?: Tier): CardDps => {
     if (kind === 'heroes') return heroDps(heroById(id)!, dps.mods, deck.perHit)
-    if (kind === 'spells') return spellDps(spellById(id)!, dps.mods, towerList, deck.perHit)
+    if (kind === 'spells') return spellDps(spellById(id)!, dps.mods, towerList, deck.perHit, { bossHp: dps.bossHp, percentHp: deck.percentHp })
     return towerDps(towerById(id)!, tier ?? tierOf(id), offOf(id), dps.mods, deck.perHit)
   }
   const clsOf = (kind: Kind, id: string): DmgClass | null => {
@@ -246,6 +247,33 @@ export function DeckBuilder(p: Props) {
         <div className="hint">All towers at that level. Set one tower alone in its info page. Ideal kill is the boss's HP ÷ DPS, as if everything hit it from the first second.</div>
       </section>
 
+      <section className="panel bonuspanel">
+        <div className="paneltitle">Deck bonuses</div>
+        <div className="hint" style={{ marginTop: 0 }}>What each card's perks add to your deck, found by leaving the perk out. Perks work as long as the card is in the deck.</div>
+        {p.gains.length === 0 && <div className="hint">Your deck has no perks yet. Add cards and they appear here.</div>}
+        {p.gains.filter((g) => g.counted).map((g) => (
+          <div key={g.cardId + g.perk.name} className="bonusrow">
+            <Icon kind={g.kind} id={g.cardId} size={34} />
+            <span className="bname"><b>{g.perk.name}</b><small>{g.cardName} · {g.perk.pct! > 0 ? '+' : ''}{g.perk.pct}% {g.perk.stat} ({g.perk.target}){g.perk.inferred ? ' *' : ''}</small></span>
+            <span className={'bgain' + (g.dps > 0 || g.killSecs > 0 ? ' up' : '')}>
+              {g.dps > 0.5 ? `+${fmt(g.dps)} DPS` : g.killSecs > 0.005 ? `kill ${g.killSecs.toFixed(2)} s faster` : 'no DPS change'}
+            </span>
+          </div>
+        ))}
+        {p.gains.some((g) => !g.counted) && (
+          <details className="bonusoff">
+            <summary>{p.gains.filter((g) => !g.counted).length} perks that do not change DPS</summary>
+            {p.gains.filter((g) => !g.counted).map((g) => (
+              <div key={g.cardId + g.perk.name} className="bonusrow off">
+                <Icon kind={g.kind} id={g.cardId} size={28} />
+                <span className="bname"><b>{g.perk.name}</b><small>{g.cardName}: {g.why}</small></span>
+              </div>
+            ))}
+          </details>
+        )}
+        <div className="hint">* value filled in from another card with the same perk name. Tower-damage perks add to each tower's basic attack. Whether they also boost tower skills is not known yet, so skills are not boosted.</div>
+      </section>
+
       {(['heroes', 'towers', 'spells'] as Kind[]).map((kind) => (
         <section key={kind} id={'sec-' + kind} className={'gsection' + (drag && drag.src.where === 'deck' && drag.over === 'collection' ? ' dropzone' : '')} data-drop="collection">
           <div className="sechead">
@@ -281,7 +309,7 @@ export function DeckBuilder(p: Props) {
 
       {info && (
         <InfoPage key={info.kind + info.id} kind={info.kind} id={info.id} inDeck={inDeck(info.kind, info.id)} deckTier={tierOf(info.id)} off={offOf(info.id)}
-          compute={computeFor(info.kind, info.id)} onTier={(t) => p.onTowerTier(info.id, t)} onToggleSkill={(sid) => p.onToggleSkill(info.id, sid)}
+          compute={computeFor(info.kind, info.id)} gains={p.gains.filter((g) => g.cardId === info.id)} onTier={(t) => p.onTowerTier(info.id, t)} onToggleSkill={(sid) => p.onToggleSkill(info.id, sid)}
           onUse={() => { useCard(info.kind, info.id); setInfo(null) }}
           onUnequip={() => { const i = idsOf(info.kind).indexOf(info.id); if (i >= 0) p.onPlace(info.kind, i, null); setInfo(null) }}
           onClose={() => setInfo(null)} />
@@ -301,6 +329,7 @@ export function DeckBuilder(p: Props) {
           </div>
           <label className="checkrow"><input type="checkbox" checked={deck.perks} onChange={(e) => p.onPerks(e.target.checked)} />Apply the deck's perks to the numbers</label>
           <label className="checkrow"><input type="checkbox" checked={deck.perHit} onChange={(e) => p.onPerHit(e.target.checked)} />Multi-hit skills and spells: the listed damage is per hit (multiply by the number of hits)</label>
+          <label className="checkrow"><input type="checkbox" checked={deck.percentHp} onChange={(e) => p.onPercentHp(e.target.checked)} />Count Polymorph as damage (43% of the boss's max health per cast, if it works on a boss)</label>
           <div className="hint">Untick the second box if the game lists the damage of the whole cast. A skill's affected units always count as separate hits, because with only the boss in range they all land on it.</div>
           <div className="hint">DPS = damage per hit ÷ attack time, plus each skill's damage ÷ its cooldown. Card level 9 is assumed, and the numbers come from the library, so cards marked ! may differ from what the game shows.</div>
         </Sheet>

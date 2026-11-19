@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from 'react'
 import { BOSS_ENTERS_SEC, BOSS_KW as BOSS, CREEP_SETS } from './data/kingdomwars'
 import type { CardKind } from './data/icons'
-import { deckDps, towerTierOf, type DeckInput } from './sim/dps'
+import { deckDps, perkGains, towerTierOf, type DeckInput } from './sim/dps'
 import { simulate, type Build, type Placement } from './sim/engine'
 import { dpsAt } from './sim/explorer'
 import { pointAt } from './sim/geometry'
@@ -45,7 +45,7 @@ export function App() {
     hero: d.hero ? heroById(d.hero) ?? null : null,
     spells: d.spells.map((id) => (id ? spellById(id) ?? null : null)),
     towers: d.towers.map((id) => (id ? towerById(id) ?? null : null)),
-    tier: allAt ?? d.tier, tiers: allAt ? {} : d.tiers, skillsOff: d.skillsOff, perks: d.perks, perHit: d.perHit,
+    tier: allAt ?? d.tier, tiers: allAt ? {} : d.tiers, skillsOff: d.skillsOff, perks: d.perks, perHit: d.perHit, percentHp: d.percentHp,
   })
   const ideal = useMemo(() => deckDps(inputOf(deck), BOSS.hp), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
   const tierRows: TierRow[] = useMemo(() => ([1, 2, 3] as Tier[]).map((t) => {
@@ -53,6 +53,7 @@ export function App() {
     return { tier: t, dps: r.total, perMin: r.perMin, gold: r.gold, unknown: r.unknownCosts, kill: r.idealKill }
   }), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
   const evalDeck = (d: DeckState) => deckDps(inputOf(d), BOSS.hp).total
+  const gains = useMemo(() => perkGains(inputOf(deck), BOSS.hp), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
 
   // how the deck's power just changed (shown for a few seconds beside the DPS)
   const lastTotal = useRef<number | null>(null)
@@ -149,10 +150,11 @@ export function App() {
         {step === 'deck' ? (
           <DeckBuilder
             deck={deck} dps={ideal} slot={slot} onSlot={setSlot}
-            onClear={() => setDeck({ ...emptyDeck(), tier: deck.tier, perks: deck.perks, perHit: deck.perHit })} onReset={() => setDeck(DEFAULT_DECK)}
+            onClear={() => setDeck({ ...emptyDeck(), tier: deck.tier, perks: deck.perks, perHit: deck.perHit, percentHp: deck.percentHp })} onReset={() => setDeck(DEFAULT_DECK)}
             onPlace={place} onSwap={swap}
             onTier={(t) => setDeck({ ...deck, tier: t, tiers: {} })} onTowerTier={(id, t) => setDeck({ ...deck, tiers: { ...deck.tiers, [id]: t } })}
-            onPerks={(on) => setDeck({ ...deck, perks: on })} onPerHit={(on) => setDeck({ ...deck, perHit: on })} onToggleSkill={toggleSkill}
+            onPerks={(on) => setDeck({ ...deck, perks: on })} onPerHit={(on) => setDeck({ ...deck, perHit: on })} onPercentHp={(on) => setDeck({ ...deck, percentHp: on })} onToggleSkill={toggleSkill}
+            gains={gains}
             evalDeck={evalDeck} tiers={tierRows} goBattle={goBattle}
           />
         ) : (
