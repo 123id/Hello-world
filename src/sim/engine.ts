@@ -48,9 +48,12 @@ const mean = (a: number, b: number) => (a + b) / 2
 /** Next ready time after firing at `t`: keep the cadence if we fired on schedule, restart the cooldown if we were idle. */
 const advance = (next: number, iv: number, t: number) => (t - next > DT + EPS ? t + iv : next + iv)
 
+/** % damage a tower gets from deck perks ("+4% damage to all towers", magic towers, artillery towers). It applies to the basic attack and to the tower's skills. */
+export const towerDamagePct = (t: TowerDef, mods: Mods): number => mods.towerDamage.all + (t.cls === 'magic' ? mods.towerDamage.magic : 0) + (t.cls === 'artillery' ? mods.towerDamage.artillery : 0)
+
 /** Shooter numbers after deck perks: damage per shot, seconds between shots, range. */
 export function shooterStats(t: TowerDef, td: TierDef, mods: Mods): { dmg: number; interval: number; range: number } {
-  const dmgPct = mods.towerDamage.all + (t.cls === 'magic' ? mods.towerDamage.magic : 0) + (t.cls === 'artillery' ? mods.towerDamage.artillery : 0)
+  const dmgPct = towerDamagePct(t, mods)
   const spdPct = t.cls === 'artillery' ? mods.towerSpeed.artillery : 0
   const rngPct = t.cls === 'magic' ? mods.towerRange.magic : 0
   return { dmg: mean(td.dmgMin, td.dmgMax) * (1 + dmgPct / 100), interval: td.interval / (1 + spdPct / 100), range: (td.range ?? 0) * (1 + rngPct / 100) }
@@ -95,7 +98,7 @@ export function simulate(inp: SimInput): SimResult {
     const skillsOn = t.skills.filter((s) => pl.skills.includes(s.id))
     for (const s of skillsOn) if (!s.supported) notes.push(`${t.name}: skill "${s.name}" is not simulated (${s.why})`)
     const cdPct = mods.skillCooldown.all + (t.cls === 'artillery' ? mods.skillCooldown.artillery : 0) + (t.cls === 'magic' ? mods.skillCooldown.magic : 0) + (t.kind === 'barracks' ? mods.skillCooldown.barracks : 0)
-    const sdPct = t.cls === 'magic' ? mods.skillDamage.magic : 0
+    const sdPct = towerDamagePct(t, mods) + (t.cls === 'magic' ? mods.skillDamage.magic : 0)
     const skills = skillsOn.filter((s) => s.supported).map((s) => skillRT(s, `${t.name} · ${s.name}`, cdPct, sdPct))
     if (t.kind === 'shooter') {
       const st = shooterStats(t, td, mods)

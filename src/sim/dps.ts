@@ -1,6 +1,6 @@
 // "Pure number" DPS for deck building: damage per hit ÷ attack time, plus every skill's damage ÷ its cooldown.
 // No map, no boss position, no creeps, no blocking. (The position-dependent fight is the simulator in engine.ts.)
-import { shooterStats } from './engine'
+import { shooterStats, towerDamagePct } from './engine'
 import type { HeroDef, PerkDef, SkillDef, SpellDef, Tier, TowerDef } from './library'
 import { applyPerk, collectMods, emptyMods, type Mods } from './perks'
 
@@ -73,7 +73,8 @@ function skillParts(skills: SkillDef[], ctx: SkillCtx): { parts: DpsPart[]; note
 /** How perks change a tower's skills (cooldowns and damage). */
 export function towerSkillCtx(t: TowerDef, tier: Tier, mods: Mods, perHit: boolean): SkillCtx {
   const cdPct = mods.skillCooldown.all + (t.cls === 'artillery' ? mods.skillCooldown.artillery : 0) + (t.cls === 'magic' ? mods.skillCooldown.magic : 0) + (t.kind === 'barracks' ? mods.skillCooldown.barracks : 0)
-  return { tier, cdPct, dmgPct: t.cls === 'magic' ? mods.skillDamage.magic : 0, perHit }
+  // damage perks boost the tower's skills as well as its basic attack (owner confirmed); "skill damage" perks stack on top
+  return { tier, cdPct, dmgPct: towerDamagePct(t, mods) + (t.cls === 'magic' ? mods.skillDamage.magic : 0), perHit }
 }
 
 export function towerDps(t: TowerDef, tier: Tier, off: string[], mods: Mods, perHit = true): CardDps {
