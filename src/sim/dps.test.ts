@@ -204,12 +204,13 @@ describe('whole deck', () => {
 })
 
 describe('icons', () => {
-  it('every card has a picture except the two spells that were never shown in a recording', () => {
+  it('every card has a picture, and the spell list matches the game (17 spells)', () => {
+    expect(LIBRARY.spells).toHaveLength(17)
     const missing = [
       ...LIBRARY.towers.filter((t) => !ICON_FILES[`towers:${t.id}`]).map((t) => t.name),
       ...LIBRARY.heroes.filter((h) => !ICON_FILES[`heroes:${h.id}`]).map((h) => h.name),
       ...LIBRARY.spells.filter((s) => !ICON_FILES[`spells:${s.id}`]).map((s) => s.name),
     ]
-    expect(missing.sort()).toEqual(['Arcane Circle', 'Merchants'])
+    expect(missing).toEqual([])
   })
 })

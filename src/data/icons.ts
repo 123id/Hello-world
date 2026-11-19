@@ -26,6 +26,7 @@ export const ICON_FILES: Record<string, string> = {
   'spells:fallen-order': 'icons/spells-fallen-order.png',
   'spells:icy-zone': 'icons/spells-icy-zone.png',
   'spells:lightning-stun': 'icons/spells-lightning-stun.png',
+  'spells:merchants': 'icons/spells-merchants.png',
   'spells:oasis-mirage': 'icons/spells-oasis-mirage.png',
   'spells:polymorph': 'icons/spells-polymorph.png',
   'spells:rain-of-fire': 'icons/spells-rain-of-fire.png',
