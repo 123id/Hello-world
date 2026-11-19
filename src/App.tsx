@@ -45,7 +45,7 @@ export function App() {
     hero: d.hero ? heroById(d.hero) ?? null : null,
     spells: d.spells.map((id) => (id ? spellById(id) ?? null : null)),
     towers: d.towers.map((id) => (id ? towerById(id) ?? null : null)),
-    tier: allAt ?? d.tier, tiers: allAt ? {} : d.tiers, skillsOff: d.skillsOff, perks: d.perks, perHit: d.perHit, percentHp: d.percentHp,
+    tier: allAt ?? d.tier, tiers: allAt ? {} : d.tiers, skillsOff: d.skillsOff, perks: d.perks, perHit: d.perHit,
   })
   const ideal = useMemo(() => deckDps(inputOf(deck), BOSS.hp), [deck]) // eslint-disable-line react-hooks/exhaustive-deps
   const tierRows: TierRow[] = useMemo(() => ([1, 2, 3] as Tier[]).map((t) => {
@@ -150,10 +150,10 @@ export function App() {
         {step === 'deck' ? (
           <DeckBuilder
             deck={deck} dps={ideal} slot={slot} onSlot={setSlot}
-            onClear={() => setDeck({ ...emptyDeck(), tier: deck.tier, perks: deck.perks, perHit: deck.perHit, percentHp: deck.percentHp })} onReset={() => setDeck(DEFAULT_DECK)}
+            onClear={() => setDeck({ ...emptyDeck(), tier: deck.tier, perks: deck.perks, perHit: deck.perHit })} onReset={() => setDeck(DEFAULT_DECK)}
             onPlace={place} onSwap={swap}
             onTier={(t) => setDeck({ ...deck, tier: t, tiers: {} })} onTowerTier={(id, t) => setDeck({ ...deck, tiers: { ...deck.tiers, [id]: t } })}
-            onPerks={(on) => setDeck({ ...deck, perks: on })} onPerHit={(on) => setDeck({ ...deck, perHit: on })} onPercentHp={(on) => setDeck({ ...deck, percentHp: on })} onToggleSkill={toggleSkill}
+            onPerks={(on) => setDeck({ ...deck, perks: on })} onPerHit={(on) => setDeck({ ...deck, perHit: on })} onToggleSkill={toggleSkill}
             gains={gains}
             evalDeck={evalDeck} tiers={tierRows} goBattle={goBattle}
           />

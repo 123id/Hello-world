@@ -22,7 +22,7 @@ interface Props {
   onPlace: (kind: Kind, index: number, id: string | null) => void
   onSwap: (kind: Kind, a: number, b: number) => void
   onTier: (t: Tier) => void; onTowerTier: (towerId: string, t: Tier) => void
-  onPerks: (on: boolean) => void; onPerHit: (on: boolean) => void; onPercentHp: (on: boolean) => void
+  onPerks: (on: boolean) => void; onPerHit: (on: boolean) => void
   gains: PerkGain[]
   onToggleSkill: (towerId: string, skillId: string) => void
   evalDeck: (d: DeckState) => number
@@ -110,7 +110,7 @@ export function DeckBuilder(p: Props) {
   const towerList = dps.towers.map((t) => t?.dps ?? 0)
   const cardInfo = (kind: Kind, id: string, tier?: Tier): CardDps => {
     if (kind === 'heroes') return heroDps(heroById(id)!, dps.mods, deck.perHit)
-    if (kind === 'spells') return spellDps(spellById(id)!, dps.mods, towerList, deck.perHit, { bossHp: dps.bossHp, percentHp: deck.percentHp })
+    if (kind === 'spells') return spellDps(spellById(id)!, dps.mods, towerList, deck.perHit)
     return towerDps(towerById(id)!, tier ?? tierOf(id), offOf(id), dps.mods, deck.perHit)
   }
   const clsOf = (kind: Kind, id: string): DmgClass | null => {
@@ -329,7 +329,6 @@ export function DeckBuilder(p: Props) {
           </div>
           <label className="checkrow"><input type="checkbox" checked={deck.perks} onChange={(e) => p.onPerks(e.target.checked)} />Apply the deck's perks to the numbers</label>
           <label className="checkrow"><input type="checkbox" checked={deck.perHit} onChange={(e) => p.onPerHit(e.target.checked)} />Multi-hit skills and spells: the listed damage is per hit (multiply by the number of hits)</label>
-          <label className="checkrow"><input type="checkbox" checked={deck.percentHp} onChange={(e) => p.onPercentHp(e.target.checked)} />Count Polymorph as damage (43% of the boss's max health per cast, if it works on a boss)</label>
           <div className="hint">Untick the second box if the game lists the damage of the whole cast. A skill's affected units always count as separate hits, because with only the boss in range they all land on it.</div>
           <div className="hint">DPS = damage per hit ÷ attack time, plus each skill's damage ÷ its cooldown. Card level 9 is assumed, and the numbers come from the library, so cards marked ! may differ from what the game shows.</div>
         </Sheet>

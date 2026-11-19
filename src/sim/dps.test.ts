@@ -131,13 +131,11 @@ describe('heroes and spells', () => {
   it('Wrath of Blackburn (a summon spell): 1 unit of 2,019–2,355 every 1.9 s, alive 13 of every 21 s', () => {
     expect(spellDps(spellById('wrath-of-blackburn')!, m).dps).toBeCloseTo((2187 / 1.9) * (13 / 21), 6)
   })
-  it('Polymorph removes 43% of the boss\'s MAX health every 35 s (confirmed by the owner)', () => {
+  it('Polymorph does not work on the boss, so it adds no damage and says why', () => {
     const p = spellById('polymorph')!
-    expect(p.kind).toBe('percentHp'); expect(p.selectable).toBe(true)
-    const r = spellDps(p, m, [], true, { bossHp: 255449, percentHp: true })
-    expect(r.dps).toBeCloseTo((255449 * 0.43) / 35, 6)
-    expect(r.parts[0].detail).toBe("43% of the boss's max health (255,449) = 109,843 per cast ÷ 35 s cooldown")
-    expect(spellDps(p, m, [], true, { bossHp: 255449, percentHp: false }).dps).toBeNull() // switched off
+    expect(p.issues).toEqual(['does not work on the boss'])
+    expect(spellDps(p, m).dps).toBeNull()
+    expect(deckDps({ hero: null, spells: [p, null, null], towers: [null, null, null, null], tier: 3, skillsOff: {}, perks: true, perHit: true }, 1).total).toBe(0)
   })
   it('other utility spells still have no DPS', () => { expect(spellDps(spellById('teleport')!, m).dps).toBeNull() })
 })
@@ -179,15 +177,6 @@ describe('perks', () => {
     expect(withCoven.towers[0]!.parts[0].dps / without.towers[0]!.parts[0].dps).toBeCloseTo(1.04, 6)
     expect(withCoven.towers[1]!.parts[0].dps / without.towers[1]!.parts[0].dps).toBeCloseTo(1.04, 6)
     expect(deckDps({ ...base(), towers: [T('royal-archers'), T('genies-domains'), T('witches-coven'), null], perks: false }, 1).towers[0]!.parts[0].dps).toBeCloseTo(without.towers[0]!.parts[0].dps, 6)
-  })
-  it("Polymorph in a deck follows the boss's health after enemy-health perks, on the card and in the total", () => {
-    const d = { hero: null, spells: [spellById('polymorph')!, null, null], towers: [T('royal-archers'), null, null, null], tier: 3 as const, skillsOff: {}, perks: true, perHit: true }
-    const r = deckDps(d, 100000)
-    expect(r.bossHp).toBeCloseTo(98000, 6) // Royal Archers: -2% enemy health
-    expect(r.spells[0]!.dps).toBeCloseTo((98000 * 0.43) / 35, 6)
-    expect(deckDps({ ...d, perks: false }, 100000).spells[0]!.dps).toBeCloseTo((100000 * 0.43) / 35, 6)
-    expect(deckDps({ ...d, percentHp: false }, 100000).spells[0]).not.toBeNull()   // the card still exists, it just has no number
-    expect(deckDps({ ...d, percentHp: false }, 100000).spells[0]!.dps).toBeNull()
   })
   it('perkGains measures what each perk adds by leaving it out', () => {
     const d = { ...base(), towers: [T('royal-archers'), T('genies-domains'), T('witches-coven'), null] }

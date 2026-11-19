@@ -102,7 +102,7 @@ export function InfoPage({ kind, id, inDeck, deckTier, off, compute, gains, onTi
       <>
         <div className="ipanelhead"><b>{tower ? 'Tower stats' : hero ? 'Hero stats' : 'Spell stats'}</b>{tower ? <button className="ilvl" onClick={nextTier}>LVL{tier}</button> : <span className="ilvl static">LVL 9</span>}</div>
         {!hasStats && (
-          <div className="inostats">{spell && spell.kind === 'other' && !spell.issues.some((i) => /missing|summon|unknown/.test(i)) ? 'This spell has no damage numbers.' : 'No stats for this card yet.'}</div>
+          <div className="inostats">{card.issues.some((i) => /boss/.test(i)) ? 'This spell does not work on the boss, so it adds no damage.' : 'No stats for this card yet.'}</div>
         )}
         {hasStats && <div className="idps">
           <div className="idpsbig">{info.dps === null ? 'No DPS' : `${fmt(info.dps)} DPS`}</div>
