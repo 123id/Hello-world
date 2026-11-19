@@ -253,8 +253,198 @@
  },
  "spells:wrath-of-blackburn": {
   "file": "icons/spells-wrath-of-blackburn.png",
-  "w": 166,
-  "h": 182,
-  "shape": "hex"
+  "w": 160,
+  "h": 168,
+  "shape": "hex",
+  "fromGameVideo": true
+ },
+ "heroes:alleria-swiftwind": {
+  "file": "icons/heroes-alleria-swiftwind.png",
+  "w": 160,
+  "h": 172,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "heroes:elora-wintersong": {
+  "file": "icons/heroes-elora-wintersong.png",
+  "w": 160,
+  "h": 172,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "heroes:gerald-lightseeker": {
+  "file": "icons/heroes-gerald-lightseeker.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "heroes:grawl": {
+  "file": "icons/heroes-grawl.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "spells:icy-zone": {
+  "file": "icons/spells-icy-zone.png",
+  "w": 160,
+  "h": 176,
+  "shape": "hex",
+  "fromGameVideo": true
+ },
+ "spells:lightning-stun": {
+  "file": "icons/spells-lightning-stun.png",
+  "w": 160,
+  "h": 151,
+  "shape": "hex",
+  "fromGameVideo": true
+ },
+ "spells:oasis-mirage": {
+  "file": "icons/spells-oasis-mirage.png",
+  "w": 160,
+  "h": 146,
+  "shape": "hex",
+  "fromGameVideo": true
+ },
+ "spells:royal-edict": {
+  "file": "icons/spells-royal-edict.png",
+  "w": 160,
+  "h": 149,
+  "shape": "hex",
+  "fromGameVideo": true
+ },
+ "spells:sabotage": {
+  "file": "icons/spells-sabotage.png",
+  "w": 160,
+  "h": 140,
+  "shape": "hex",
+  "fromGameVideo": true
+ },
+ "towers:archer-tower": {
+  "file": "icons/towers-archer-tower.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:archery-scouts": {
+  "file": "icons/towers-archery-scouts.png",
+  "w": 160,
+  "h": 165,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:archmage": {
+  "file": "icons/towers-archmage.png",
+  "w": 160,
+  "h": 172,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:barbarian-mead-hall": {
+  "file": "icons/towers-barbarian-mead-hall.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:crossbow-fort": {
+  "file": "icons/towers-crossbow-fort.png",
+  "w": 160,
+  "h": 172,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:dwaarp": {
+  "file": "icons/towers-dwaarp.png",
+  "w": 160,
+  "h": 172,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:dwarven-artillery": {
+  "file": "icons/towers-dwarven-artillery.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:genies-domains": {
+  "file": "icons/towers-genies-domains.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:glacial-druid": {
+  "file": "icons/towers-glacial-druid.png",
+  "w": 160,
+  "h": 164,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:hunter-outpost": {
+  "file": "icons/towers-hunter-outpost.png",
+  "w": 160,
+  "h": 167,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:mage-tower": {
+  "file": "icons/towers-mage-tower.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:necromancer": {
+  "file": "icons/towers-necromancer.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:paladin-barracks": {
+  "file": "icons/towers-paladin-barracks.png",
+  "w": 160,
+  "h": 172,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:rangers-hideout": {
+  "file": "icons/towers-rangers-hideout.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:rocket-gunners": {
+  "file": "icons/towers-rocket-gunners.png",
+  "w": 160,
+  "h": 172,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:royal-archers": {
+  "file": "icons/towers-royal-archers.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:sorcerer-mage": {
+  "file": "icons/towers-sorcerer-mage.png",
+  "w": 160,
+  "h": 173,
+  "shape": "rect",
+  "fromGameVideo": true
+ },
+ "towers:tesla-x104": {
+  "file": "icons/towers-tesla-x104.png",
+  "w": 160,
+  "h": 168,
+  "shape": "rect",
+  "fromGameVideo": true
  }
 }

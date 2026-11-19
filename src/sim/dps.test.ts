@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest'
 import { deckDps, heroDps, skillDps, spellDps, towerDps, towerLevels } from './dps'
 import { emptyMods } from './perks'
-import { heroById, spellById, towerById, type SkillDef } from './library'
+import { ICON_FILES } from '../data/icons'
+import { LIBRARY, heroById, spellById, towerById, type SkillDef } from './library'
 
 const m = emptyMods()
 const T = (id: string) => towerById(id)!
@@ -199,5 +200,16 @@ describe('whole deck', () => {
   it('the per-hit switch changes multi-hit spells and skills in the deck total', () => {
     const d = { ...base(), perks: false }
     expect(deckDps({ ...d, perHit: true }, 1).total).toBeGreaterThan(deckDps({ ...d, perHit: false }, 1).total)
+  })
+})
+
+describe('icons', () => {
+  it('every card has a picture except the two spells that were never shown in a recording', () => {
+    const missing = [
+      ...LIBRARY.towers.filter((t) => !ICON_FILES[`towers:${t.id}`]).map((t) => t.name),
+      ...LIBRARY.heroes.filter((h) => !ICON_FILES[`heroes:${h.id}`]).map((h) => h.name),
+      ...LIBRARY.spells.filter((s) => !ICON_FILES[`spells:${s.id}`]).map((s) => s.name),
+    ]
+    expect(missing.sort()).toEqual(['Arcane Circle', 'Merchants'])
   })
 })

@@ -119,7 +119,7 @@ export function DeckBuilder(p: Props) {
   }
   const pillFor = (kind: Kind, id: string): { text: string; tone: 'good' | 'off' } => {
     const v = cardInfo(kind, id).dps
-    if (v === null) return { text: 'no data', tone: 'off' }
+    if (v === null) return { text: '', tone: 'off' } // no stats in the library: show the picture only
     return { text: kind === 'spells' && spellById(id)!.kind === 'buff' ? `+${fmt(v)}` : `${fmt(v)} DPS`, tone: 'good' }
   }
 

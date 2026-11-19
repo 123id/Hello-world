@@ -56,8 +56,10 @@ export function InfoPage({ kind, id, inDeck, deckTier, off, compute, onTier, onT
 
   const tier: Tier = tower ? viewTier : 3
   const skills: SkillDef[] = (tower ?? hero)?.skills ?? []
-  const shownSkills = skills.filter((s) => !s.calcWhy?.startsWith('scope')) // opponent-only skills are not for the boss
   const info = compute.info(tier)
+  const hasStats = info.dps !== null || info.parts.length > 0
+  // opponent-only skills are not for the boss, and a skill with no numbers has nothing to show
+  const shownSkills = skills.filter((s) => !s.calcWhy?.startsWith('scope') && s.calc !== null)
   const cls = hero ? classOfHero(hero) : tower ? classOfTower(tower) : spell && spell.kind !== 'buff' ? ('magic' as const) : null
   const nextTier = () => { const n = ((tier % 3) + 1) as Tier; setViewTier(n); if (inDeck) onTier(n) }
   const skill = tab !== 'info' ? shownSkills.find((s) => s.id === tab) : undefined
@@ -96,20 +98,22 @@ export function InfoPage({ kind, id, inDeck, deckTier, off, compute, onTier, onT
     return (
       <>
         <div className="ipanelhead"><b>{tower ? 'Tower stats' : hero ? 'Hero stats' : 'Spell stats'}</b>{tower ? <button className="ilvl" onClick={nextTier}>LVL{tier}</button> : <span className="ilvl static">LVL 9</span>}</div>
-        <div className="idps">
+        {!hasStats && (
+          <div className="inostats">{spell && spell.kind === 'other' && !spell.issues.some((i) => /missing|summon|unknown/.test(i)) ? 'This spell has no damage numbers.' : 'No stats for this card yet.'}</div>
+        )}
+        {hasStats && <div className="idps">
           <div className="idpsbig">{info.dps === null ? 'No DPS' : `${fmt(info.dps)} DPS`}</div>
           {info.parts.length > 1 && <div className="ihint" style={{ marginTop: 0 }}>All of this added together:</div>}
           {info.parts.map((p) => <div key={p.label} className="idpspart"><span><b>{p.label}</b><small>{p.detail}</small></span><b>{fmt(p.dps)}</b></div>)}
           {info.notes.map((n, i) => <div key={i} className="ihint warn">{n}</div>)}
-          {info.dps === null && info.notes.length === 0 && <div className="ihint">The library has no damage numbers for this card.</div>}
           {tower && (
             <div className="ilevels">
               {TIERS.map((t) => { const d = compute.info(t).dps; return <button key={t} className={t === tier ? 'on' : ''} onClick={() => { setViewTier(t); if (inDeck) onTier(t) }}><span>LVL{t}</span><b>{d === null ? '—' : fmt(d)}</b></button> })}
             </div>
           )}
-        </div>
-        {odd && <div className="iwarn">These numbers are from card level {card.dataLevel}; the game shows the numbers of your own card level, so they differ.</div>}
-        <div className="itiles">
+        </div>}
+        {odd && hasStats && <div className="iwarn">These numbers are from card level {card.dataLevel}; the game shows the numbers of your own card level, so they differ.</div>}
+        {hasStats && <div className="itiles">
           {tower && <Tile label="Type" tone="pink" value={<>{cls && <ClassIcon cls={cls} size={14} />}{cls ? CLASS_LABEL[cls] : ''}</>} />}
           {tower && td && <Tile label="Cost" value={td.cost != null ? <Gold n={td.cost} size={15} /> : '—'} />}
           {tower && td && <Tile label="Attack speed" value={td.interval} />}
@@ -132,10 +136,10 @@ export function InfoPage({ kind, id, inDeck, deckTier, off, compute, onTier, onT
             {spell.kind === 'buff' && <><Tile label="Damage" value={`+${spell.buffDmgPct}%`} /><Tile label="Range" value={`+${spell.buffRangePct}%`} /><Tile label="Duration" value={`${spell.duration} s`} /><Tile label="Towers" value={spell.buffTowers} /></>}
             {spell.kind === 'summon' && spell.summon && <><Tile label="Units" value={spell.summon.units} /><Tile label="Hit" value={fmt(spell.summon.dmgAvg)} /><Tile label="Attack speed" value={spell.summon.interval} /><Tile label="Lasts" value={`${spell.summon.duration} s`} /></>}
           </>}
-        </div>
+        </div>}
         <div className="isub">Perks</div>
         <PerkList perks={card.perks} />
-        <div className="ihint">* value filled in from another card with the same perk name</div>
+        {card.perks.some((p) => p.inferred) && <div className="ihint">* value filled in from another card with the same perk name</div>}
       </>
     )
   })()

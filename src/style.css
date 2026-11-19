@@ -202,3 +202,4 @@ input[type=range] { width: 100%; accent-color: var(--gold); }
 .bottomnav button.on { background: radial-gradient(ellipse at 50% 30%, #f0a35a, #b8672f 70%); height: 78px; margin-top: -10px; box-shadow: 0 0 14px rgba(255,170,80,.45); }
 .bottomnav button.on img { height: 50px; }
 .bottomnav button.on span { color: #fff; font-size: .95rem; text-shadow: -1.5px -1.5px 0 #3a1c08, 1.5px -1.5px 0 #3a1c08, -1.5px 1.5px 0 #3a1c08, 1.5px 1.5px 0 #3a1c08; }
+.inostats { font-family: var(--body); text-align: center; color: #5a6a82; background: #e6eef3; border-radius: 12px; padding: 14px 10px; margin: 10px 0; font-size: .9rem; }
