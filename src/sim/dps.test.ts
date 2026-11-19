@@ -33,11 +33,11 @@ describe('basic attack = damage per hit ÷ attack time', () => {
 
 describe('skill maths', () => {
   it('a cast skill: damage ÷ cooldown', () => {
-    const r = skillDps(skill({ type: 'cast', cooldown: 10, dmgAvg: 1000, strikes: 1, chance: 1 }), ctx)
+    const r = skillDps(skill({ type: 'cast', cooldown: 10, dmgAvg: 1000, strikes: 1, targets: 1, chance: 1 }), ctx)
     expect(r.part!.dps).toBe(100); expect(r.part!.detail).toBe('1,000 per cast ÷ 10 s cooldown')
   })
   it('a multi-hit skill multiplies by the number of hits when damage is per hit, not when it is per cast', () => {
-    const k = skill({ type: 'cast', cooldown: 12, dmgAvg: 300, strikes: 8, chance: 1 })
+    const k = skill({ type: 'cast', cooldown: 12, dmgAvg: 300, strikes: 8, targets: 1, chance: 1 })
     expect(skillDps(k, { tier: 3, perHit: true }).part!.dps).toBe((300 * 8) / 12)
     expect(skillDps(k, { tier: 3, perHit: true }).part!.detail).toBe('8 hits × 300 = 2,400 per cast ÷ 12 s cooldown')
     expect(skillDps(k, { tier: 3, perHit: false }).part!.dps).toBe(300 / 12)
@@ -46,11 +46,27 @@ describe('skill maths', () => {
     const ms = heroById('alleria-swiftwind')!.skills.find((s) => s.name === 'Multi Shot')!
     expect(skillDps(ms, ctx).part!.dps).toBeCloseTo((8 * 323) / 12, 6)
   })
+  it("affected units all hit a lone boss: Mage Tower's Spell Barrage = 8 hits of 810–971 every 16 s", () => {
+    const sb = T('mage-tower').skills.find((s) => s.id === 'spell-barrage')!
+    const r = skillDps(sb, ctx)
+    expect(r.part!.dps).toBeCloseTo((8 * 890.5) / 16, 6)
+    expect(r.part!.detail).toBe('8 hits × 891 = 7,124 per cast ÷ 16 s cooldown (8 affected units, all on the boss)')
+    // the per-hit switch is about listed multi-hit damage, not about affected units
+    expect(skillDps(sb, { tier: 3, perHit: false }).part!.dps).toBeCloseTo((8 * 890.5) / 16, 6)
+  })
+  it('other skills that list affected units are multiplied too', () => {
+    const wasp = T('battle-mecha').skills.find((s) => s.id === 'wasp-missile')!
+    expect(skillDps(wasp, ctx).part!.dps).toBeCloseTo((2 * ((1597 + 2202) / 2)) / 18, 6)
+  })
+  it('costs and the Spell Barrage cooldown confirmed from the game video are in the library', () => {
+    expect([1, 2, 3].map((t) => T('mage-tower').tiers[t as 1 | 2 | 3]!.cost)).toEqual([70, 150, 230])
+    expect(T('mage-tower').skills.find((s) => s.id === 'spell-barrage')!.cost).toBe(250)
+  })
   it('a chance multiplies the damage', () => {
-    expect(skillDps(skill({ type: 'cast', cooldown: 10, dmgAvg: 1000, strikes: 1, chance: 0.25 }), ctx).part!.dps).toBe(25)
+    expect(skillDps(skill({ type: 'cast', cooldown: 10, dmgAvg: 1000, strikes: 1, targets: 1, chance: 0.25 }), ctx).part!.dps).toBe(25)
   })
   it('perks shorten cooldowns and add damage', () => {
-    const k = skill({ type: 'cast', cooldown: 10, dmgAvg: 1000, strikes: 1, chance: 1 })
+    const k = skill({ type: 'cast', cooldown: 10, dmgAvg: 1000, strikes: 1, targets: 1, chance: 1 })
     expect(skillDps(k, { ...ctx, cdPct: -20 }).part!.dps).toBeCloseTo(1000 / 8, 6)
     expect(skillDps(k, { ...ctx, dmgPct: 10 }).part!.dps).toBeCloseTo(110, 6)
   })

@@ -1,10 +1,27 @@
 // Adapter: raw card library (src/data/library.json) -> simulator cards.
 // Rule: never invent numbers. A card is "selectable" only if the library has what the engine needs;
 // everything else is listed with the reason it is excluded. Defaults we had to assume are marked.
-import raw from '../data/library.json'
+import rawJson from '../data/library.json'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Raw = Record<string, any>
+
+/**
+ * Facts read from the owner's screen recording of the game's Mage Tower page (2026-11). Only things that do not depend on
+ * the card's level are applied: tower costs per level and the Spell Barrage skill's cooldown, cost and number of targets.
+ * (The damage numbers on that page are for a level 15 card, so they are NOT applied; the library's level 7 damage stays.)
+ */
+function patchRaw(r: Raw): Raw {
+  const mage = (r.towers as Raw[]).find((t) => t.id === 'mage-tower')
+  if (mage) {
+    const cost: Record<number, number> = { 1: 70, 2: 150, 3: 230 }
+    for (const t of mage.tiers as Raw[]) t.totalCost = cost[t.tier] ?? t.totalCost
+    const sb = (mage.skills as Raw[]).find((x) => x.id === 'spell-barrage')
+    if (sb) { sb.cooldownSec = 16; sb.units = 8; sb.purchaseCost = 250 }
+  }
+  return r
+}
+const raw = patchRaw(structuredClone(rawJson) as Raw)
 export type Tier = 1 | 2 | 3
 export const TIERS: Tier[] = [1, 2, 3]
 
@@ -19,7 +36,7 @@ export interface TierDef {
 
 /** How to turn a skill into damage per second (used by the deck builder; the fight simulator uses the simpler fields below). */
 export type SkillCalc =
-  | { type: 'cast'; cooldown: number | number[]; dmgAvg: number; strikes: number; chance: number } // `number[]` = one value per tower level
+  | { type: 'cast'; cooldown: number | number[]; dmgAvg: number; strikes: number; targets: number; chance: number } // `number[]` = one value per tower level. `targets` = affected units: with only the boss in range, every one of them hits the boss
   | { type: 'dot'; dps: number | number[]; duration: number | number[]; cooldown?: number } // no cooldown = applied by the tower's attacks, always on
   | { type: 'summon'; units: number; dmgAvg: number; interval: number; cooldown: number; duration: number | null }
 
@@ -32,6 +49,7 @@ export interface SkillDef {
   cooldown?: number; dmgAvg?: number; aoe?: number; dps?: number; duration?: number
   calc: SkillCalc | null // null: the library has no usable damage numbers (see calcWhy)
   calcWhy?: string
+  dmgMin?: number | null; dmgMax?: number | null; units?: number | null // as the game's skill page lists them
 }
 
 export interface PerkDef { name: string; stat: string | null; target: string | null; pct: number | null; inferred?: boolean }
@@ -39,7 +57,7 @@ export interface PerkDef { name: string; stat: string | null; target: string | n
 export type TowerClass = 'ranged' | 'magic' | 'artillery'
 
 export interface TowerDef {
-  id: string; name: string; rarity: string | null
+  id: string; name: string; rarity: string | null; dataLevel: number | null
   kind: 'shooter' | 'barracks'
   cls: TowerClass // GUESSED for perks / anti-air rules (see TOWER_CLASS)
   hitsAir: boolean
@@ -52,7 +70,7 @@ export interface TowerDef {
 }
 
 export interface HeroDef {
-  id: string; name: string; rarity: string | null
+  id: string; name: string; rarity: string | null; dataLevel: number | null // the card level the library's numbers were read at (the calculator wants 9)
   hp: number; armor: number
   dmgMin: number; dmgMax: number; interval: number
   respawn: number; respawnAssumed: boolean
@@ -62,7 +80,7 @@ export interface HeroDef {
 }
 
 export interface SpellDef {
-  id: string; name: string; rarity: string | null
+  id: string; name: string; rarity: string | null; dataLevel: number | null
   kind: 'strike' | 'zone' | 'buff' | 'summon' | 'other'
   cooldown: number
   aoe: number
@@ -138,14 +156,15 @@ function calcOf(s: Raw): { calc: SkillCalc | null; calcWhy?: string } {
   }
   if (dmin !== null && dmax !== null) {
     if (!cd) return { calc: null, calcWhy: 'damage is listed but the library has no cooldown (it may trigger by chance)' }
-    return { calc: { type: 'cast', cooldown: cd, dmgAvg: avg(dmin, dmax), strikes: num(s.strikes) ?? 1, chance: (num(s.chancePct) ?? 100) / 100 } }
+    const targets = s.kind === 'periodicDamage' && !s.strikes ? num(s.units) ?? 1 : 1 // owner: "if only one enemy is in range, all of them hit the boss"
+    return { calc: { type: 'cast', cooldown: cd, dmgAvg: avg(dmin, dmax), strikes: num(s.strikes) ?? 1, targets, chance: (num(s.chancePct) ?? 100) / 100 } }
   }
   return { calc: null, calcWhy: `a ${s.kind ?? 'unknown'} skill with no damage number` }
 }
 
 function skillsOf(card: Raw): SkillDef[] {
   return ((card.skills ?? []) as Raw[]).map((s): SkillDef => {
-    const base = { id: String(s.id), name: String(s.name ?? s.id), cost: num(s.purchaseCost), ...calcOf(s) }
+    const base = { id: String(s.id), name: String(s.name ?? s.id), cost: num(s.purchaseCost), ...calcOf(s), dmgMin: num(s.damageMin), dmgMax: num(s.damageMax), units: num(s.units) ?? num(s.affectedUnits) }
     if (s.scope !== 'boss') return { ...base, kind: 'other', supported: false, why: `scope: ${s.scope}` }
     const cd = num(s.cooldownSec), dmin = num(s.damageMin), dmax = num(s.damageMax)
     if (s.kind === 'periodicDamage' && cd && dmin !== null && dmax !== null) {
@@ -182,7 +201,7 @@ function buildTowers(): TowerDef[] {
     if (!tiers[3]) issues.push('tier 3 stats incomplete in library')
     const cls = TOWER_CLASS[c.id] ?? 'ranged'
     return {
-      id: c.id, name: c.name, rarity: c.rarity ?? null, kind: barracks ? 'barracks' : 'shooter', cls,
+      id: c.id, name: c.name, rarity: c.rarity ?? null, dataLevel: num(c.dataLevel), kind: barracks ? 'barracks' : 'shooter', cls,
       hitsAir: cls !== 'artillery' || AIR_EXCEPTIONS.has(c.id),
       targetsHighestHp: c.id === 'twilight-longbow',
       tiers, skills: skillsOf(c), perks: perksOf(c), issues: [...new Set(issues)], selectable: issues.length === 0,
@@ -199,7 +218,7 @@ function buildHeroes(): HeroDef[] {
     if (iv === null) issues.push('attack speed missing')
     const resp = num(c.respawnSec) ?? RESPAWN_FIXES[c.id] ?? null
     return {
-      id: c.id, name: c.name, rarity: c.rarity ?? null,
+      id: c.id, name: c.name, rarity: c.rarity ?? null, dataLevel: num(c.dataLevel),
       hp: hp ?? 0, armor: num(c.armorPct) ?? 0, dmgMin: dmin ?? 0, dmgMax: dmax ?? 0, interval: iv ?? 1,
       respawn: resp ?? 15, respawnAssumed: resp === null, ranged: c.attackType === 'ranged' || c.attackType === 'flying',
       skills: skillsOf(c), perks: perksOf(c), issues, selectable: issues.length === 0,
@@ -221,7 +240,7 @@ function buildSpells(): SpellDef[] {
     else if ((c.kind === 'spellSummon' || c.kind === 'summon') && num(c.units) && num(c.unitDamageMin) !== null && num(c.unitAttackIntervalSec) && dur && cd) kind = 'summon'
     else issues.push(c.kind === 'spellDamage' ? 'damage or duration missing in library' : `${c.kind ?? (MISFILED_SPELLS.has(c.id) ? 'summon' : 'unknown')} spell not simulated yet`)
     return {
-      id: c.id, name: c.name, rarity: c.rarity ?? null, kind, cooldown: cd ?? 0, aoe: num(c.aoe) ?? 80,
+      id: c.id, name: c.name, rarity: c.rarity ?? null, dataLevel: num(c.dataLevel), kind, cooldown: cd ?? 0, aoe: num(c.aoe) ?? 80,
       hits: num(c.hits) ?? 1, dmgMin: dmin ?? 0, dmgMax: dmax ?? 0,
       buffDmgPct: num(c.buffDamagePct) ?? 0, buffRangePct: num(c.buffRangePct) ?? 0, buffTowers: num(c.affectedTowers) ?? 4,
       dpsAvg: pmin !== null && pmax !== null ? avg(pmin, pmax) : 0, duration: dur ?? 0, slowPct: num(c.slowPct) ?? 0,
