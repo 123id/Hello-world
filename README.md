@@ -14,6 +14,7 @@ you can still drag cards into it.
   *affected units count as separate hits on the boss* (with only the boss in range they all land on it); chance skills × chance; per-level cooldowns and damage-over-time
   values; summons = units × hit ÷ interval × (time alive ÷ cooldown). A skill with missing numbers is listed with the reason instead of being guessed.
 - Tower level 1/2/3 for all towers (the Tower level panel) or per tower (its info page); tower skills start at level 3 and can be counted or not one by one.
+- `src/data/videoFacts.ts` holds facts read from screen recordings of the game's info pages. Level-independent values (costs, attack speed, range, unit counts, durations) fill library gaps; level-dependent ones (damage, health, armor) are used only where the library has nothing usable, and the card is then flagged with the level they were read at.
 - Cards marked ! have missing numbers or numbers read at another card level (the library's Mage Tower damage is from level 7; the game shows your own card level).
 There is no map, boss position or creeps in this step. The header shows DPS (with the change after every swap), damage per minute, gold and an *ideal kill* (boss HP ÷ DPS).
 

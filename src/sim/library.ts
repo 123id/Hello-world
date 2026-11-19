@@ -6,22 +6,9 @@ import rawJson from '../data/library.json'
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Raw = Record<string, any>
 
-/**
- * Facts read from the owner's screen recording of the game's Mage Tower page (2026-11). Only things that do not depend on
- * the card's level are applied: tower costs per level and the Spell Barrage skill's cooldown, cost and number of targets.
- * (The damage numbers on that page are for a level 15 card, so they are NOT applied; the library's level 7 damage stays.)
- */
-function patchRaw(r: Raw): Raw {
-  const mage = (r.towers as Raw[]).find((t) => t.id === 'mage-tower')
-  if (mage) {
-    const cost: Record<number, number> = { 1: 70, 2: 150, 3: 230 }
-    for (const t of mage.tiers as Raw[]) t.totalCost = cost[t.tier] ?? t.totalCost
-    const sb = (mage.skills as Raw[]).find((x) => x.id === 'spell-barrage')
-    if (sb) { sb.cooldownSec = 16; sb.units = 8; sb.purchaseCost = 250 }
-  }
-  return r
-}
-const raw = patchRaw(structuredClone(rawJson) as Raw)
+import { applyVideoFacts } from '../data/videoFacts'
+
+const raw = applyVideoFacts(structuredClone(rawJson) as Raw)
 export type Tier = 1 | 2 | 3
 export const TIERS: Tier[] = [1, 2, 3]
 
