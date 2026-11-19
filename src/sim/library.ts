@@ -93,6 +93,9 @@ const AIR_EXCEPTIONS = new Set(['tesla-x104'])
 // Cards the raw library files under the wrong kind (confirmed from the game's deck screen).
 // Wrath of Blackburn sits in a spell slot and has a single summon skill, so it is a spell.
 const MISFILED_SPELLS = new Set(['wrath-of-blackburn'])
+// Not a card in the game: the raw library has a name and a cooldown copied from a deck site, nothing else, and the game's own spell list
+// shows 17 spells without it.
+const NOT_A_CARD = new Set(['arcane-circle'])
 // Values the library lacks but the game shows (hero info page: Gerald Lightseeker respawn 15).
 const RESPAWN_FIXES: Record<string, number> = { 'gerald-lightseeker': 15 }
 
@@ -214,7 +217,7 @@ function buildHeroes(): HeroDef[] {
 }
 
 function buildSpells(): SpellDef[] {
-  return [...(raw.spells as Raw[]), ...(raw.heroes as Raw[]).filter((c) => MISFILED_SPELLS.has(c.id))].map((card): SpellDef => {
+  return [...(raw.spells as Raw[]).filter((c) => !NOT_A_CARD.has(c.id)), ...(raw.heroes as Raw[]).filter((c) => MISFILED_SPELLS.has(c.id))].map((card): SpellDef => {
     // a spell the library filed as a hero keeps its numbers in its single skill
     const c: Raw = MISFILED_SPELLS.has(card.id) && card.skills?.[0] ? { ...card, ...card.skills[0], id: card.id, name: card.name, perks: card.perks, rarity: card.rarity } : card
     const cd = num(c.cooldownSec)

@@ -30,6 +30,7 @@ Icons: card pictures were cropped from the game's screens and screen recordings 
   (the Worker name in the dashboard must be `kr-boss-simulator`, or change `name` in `wrangler.jsonc`)
 
 ## Data
+- Card level: every card is level 9 in Kingdom Wars (confirmed by the owner), so the calculator always wants level-9 numbers; numbers read at another card level are flagged with a ! badge.
 - Cards: `data/raw/cards-full.json` (kept out of git) is scrubbed into `src/data/library.json` by `npm run library` /
   `node scripts/build-library.mjs`. The library is authoritative (including boss HP 255,449).
 - Map + creep tables: `src/data/kingdomwars.ts` (transcribed from krb-deck screenshots; route lengths checked against its tile counts).

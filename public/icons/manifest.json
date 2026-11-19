@@ -446,5 +446,11 @@
   "h": 168,
   "shape": "rect",
   "fromGameVideo": true
+ },
+ "spells:merchants": {
+  "file": "icons/spells-merchants.png",
+  "w": 160,
+  "h": 174,
+  "shape": "hex"
  }
 }
