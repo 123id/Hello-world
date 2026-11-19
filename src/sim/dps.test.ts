@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { deckDps, heroDps, skillDps, spellDps, towerDps, towerLevels } from './dps'
+import { deckDps, heroDps, perkGains, skillDps, spellDps, towerDps, towerLevels } from './dps'
 import { emptyMods } from './perks'
 import { ICON_FILES } from '../data/icons'
 import { LIBRARY, heroById, spellById, towerById, type SkillDef } from './library'
@@ -131,7 +131,15 @@ describe('heroes and spells', () => {
   it('Wrath of Blackburn (a summon spell): 1 unit of 2,019–2,355 every 1.9 s, alive 13 of every 21 s', () => {
     expect(spellDps(spellById('wrath-of-blackburn')!, m).dps).toBeCloseTo((2187 / 1.9) * (13 / 21), 6)
   })
-  it('utility spells have no DPS', () => { expect(spellDps(spellById('polymorph')!, m).dps).toBeNull() })
+  it('Polymorph removes 43% of the boss\'s MAX health every 35 s (confirmed by the owner)', () => {
+    const p = spellById('polymorph')!
+    expect(p.kind).toBe('percentHp'); expect(p.selectable).toBe(true)
+    const r = spellDps(p, m, [], true, { bossHp: 255449, percentHp: true })
+    expect(r.dps).toBeCloseTo((255449 * 0.43) / 35, 6)
+    expect(r.parts[0].detail).toBe("43% of the boss's max health (255,449) = 109,843 per cast ÷ 35 s cooldown")
+    expect(spellDps(p, m, [], true, { bossHp: 255449, percentHp: false }).dps).toBeNull() // switched off
+  })
+  it('other utility spells still have no DPS', () => { expect(spellDps(spellById('teleport')!, m).dps).toBeNull() })
 })
 
 describe('facts read from the game videos', () => {
@@ -161,6 +169,52 @@ describe('facts read from the game videos', () => {
   it('Polymorph lasts 6 s over 80 units, but is still a utility spell with no DPS', () => {
     const p = spellById('polymorph')!
     expect(p.duration).toBe(6); expect(p.aoe).toBe(80); expect(spellDps(p, m).dps).toBeNull()
+  })
+})
+
+describe('perks', () => {
+  const base = () => ({ hero: null, spells: [null, null, null], towers: [T('royal-archers'), T('genies-domains'), null, null], tier: 3 as const, skillsOff: {}, perks: true, perHit: true })
+  it("Witches Coven's Spire Force: +4% damage to every tower's basic attack, so adding it raises the other towers", () => {
+    const without = deckDps(base(), 1), withCoven = deckDps({ ...base(), towers: [T('royal-archers'), T('genies-domains'), T('witches-coven'), null] }, 1)
+    expect(withCoven.towers[0]!.parts[0].dps / without.towers[0]!.parts[0].dps).toBeCloseTo(1.04, 6)
+    expect(withCoven.towers[1]!.parts[0].dps / without.towers[1]!.parts[0].dps).toBeCloseTo(1.04, 6)
+    expect(deckDps({ ...base(), towers: [T('royal-archers'), T('genies-domains'), T('witches-coven'), null], perks: false }, 1).towers[0]!.parts[0].dps).toBeCloseTo(without.towers[0]!.parts[0].dps, 6)
+  })
+  it("Polymorph in a deck follows the boss's health after enemy-health perks, on the card and in the total", () => {
+    const d = { hero: null, spells: [spellById('polymorph')!, null, null], towers: [T('royal-archers'), null, null, null], tier: 3 as const, skillsOff: {}, perks: true, perHit: true }
+    const r = deckDps(d, 100000)
+    expect(r.bossHp).toBeCloseTo(98000, 6) // Royal Archers: -2% enemy health
+    expect(r.spells[0]!.dps).toBeCloseTo((98000 * 0.43) / 35, 6)
+    expect(deckDps({ ...d, perks: false }, 100000).spells[0]!.dps).toBeCloseTo((100000 * 0.43) / 35, 6)
+    expect(deckDps({ ...d, percentHp: false }, 100000).spells[0]).not.toBeNull()   // the card still exists, it just has no number
+    expect(deckDps({ ...d, percentHp: false }, 100000).spells[0]!.dps).toBeNull()
+  })
+  it('perkGains measures what each perk adds by leaving it out', () => {
+    const d = { ...base(), towers: [T('royal-archers'), T('genies-domains'), T('witches-coven'), null] }
+    const g = perkGains(d, 1).find((x) => x.perk.name === 'Spire Force')!
+    expect(g.counted).toBe(true); expect(g.cardName).toBe('Witches Coven')
+    const total = deckDps(d, 1).total, without = deckDps({ ...d, excludePerk: { cardId: 'witches-coven', name: 'Spire Force' } }, 1).total
+    expect(g.dps).toBeCloseTo(total - without, 6); expect(g.dps).toBeGreaterThan(0)
+    // 4% of every tower's basic attack, Coven included
+    const attacks = deckDps(d, 1).towers.reduce((a, t) => a + (t?.parts[0].dps ?? 0), 0)
+    expect(g.dps).toBeCloseTo(attacks * (0.04 / 1.04), 4)
+  })
+  it('perks with no DPS effect are listed with the reason, not hidden', () => {
+    const d = { ...base(), towers: [T('royal-archers'), T('tesla-x104'), null, null] }
+    const g = perkGains(d, 1).find((x) => x.perk.name === 'Infantry Haste')!
+    expect(g.counted).toBe(false); expect(g.why).toMatch(/survive or move/)
+  })
+  it("Summon Focus shortens summon spells' cooldown (King Malik −7%)", () => {
+    const d = { hero: heroById('king-malik')!, spells: [spellById('reinforcements')!, null, null], towers: [null, null, null, null] as (null)[], tier: 3 as const, skillsOff: {}, perks: true, perHit: true }
+    const on = deckDps(d, 1).spells[0]!.dps!, off = deckDps({ ...d, perks: false }, 1).spells[0]!.dps!
+    // Reinforcements: 22 s cooldown, alive 15 s: 15 / (22 × 0.93) of the time instead of 15 / 22
+    expect(on / off).toBeCloseTo(15 / (22 * 0.93) / (15 / 22), 6)
+  })
+  it("a perk that shrinks enemy health shortens the ideal kill (Royal Archers −2%)", () => {
+    const d = { hero: null, spells: [null, null, null], towers: [T('royal-archers'), null, null, null], tier: 3 as const, skillsOff: {}, perk: true, perks: true, perHit: true }
+    const on = deckDps(d, 100000), off = deckDps({ ...d, perks: false }, 100000)
+    expect(on.bossHp).toBeCloseTo(98000, 6); expect(off.bossHp).toBe(100000)
+    expect(on.idealKill!).toBeCloseTo(98000 / on.total, 6)
   })
 })
 

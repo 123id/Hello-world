@@ -68,13 +68,14 @@ export interface HeroDef {
 
 export interface SpellDef {
   id: string; name: string; rarity: string | null; dataLevel: number | null
-  kind: 'strike' | 'zone' | 'buff' | 'summon' | 'other'
+  kind: 'strike' | 'zone' | 'buff' | 'summon' | 'percentHp' | 'other'
   cooldown: number
   aoe: number
   hits: number; dmgMin: number; dmgMax: number // strike
   dpsAvg: number; duration: number; slowPct: number // zone (duration also used by buff)
   buffDmgPct: number; buffRangePct: number; buffTowers: number // buff (Royal Edict)
   summon: { units: number; dmgAvg: number; interval: number; duration: number } | null // summon spells (Reinforcements, Fallen Order)
+  hpPct: number // percentHp (Polymorph): % of the target's MAX health removed per cast (owner confirmed: max health)
   perks: PerkDef[]
   issues: string[]; selectable: boolean
 }
@@ -227,12 +228,13 @@ function buildSpells(): SpellDef[] {
     if (c.kind === 'spellDamage' && dmin !== null && dmax !== null && cd) kind = 'strike'
     else if (c.kind === 'spellDamage' && pmin !== null && pmax !== null && dur && cd) kind = 'zone'
     else if (c.kind === 'spellBuff' && num(c.buffDamagePct) !== null && dur && cd) kind = 'buff'
+    else if (c.kind === 'utility' && num(c.hpReductionPct) !== null && cd) kind = 'percentHp'
     else if ((c.kind === 'spellSummon' || c.kind === 'summon') && num(c.units) && num(c.unitDamageMin) !== null && num(c.unitAttackIntervalSec) && dur && cd) kind = 'summon'
     else issues.push(c.kind === 'spellDamage' ? 'damage or duration missing in library' : `${c.kind ?? (MISFILED_SPELLS.has(c.id) ? 'summon' : 'unknown')} spell not simulated yet`)
     return {
       id: c.id, name: c.name, rarity: c.rarity ?? null, dataLevel: num(c.dataLevel), kind, cooldown: cd ?? 0, aoe: num(c.aoe) ?? 80,
       hits: num(c.hits) ?? 1, dmgMin: dmin ?? 0, dmgMax: dmax ?? 0,
-      buffDmgPct: num(c.buffDamagePct) ?? 0, buffRangePct: num(c.buffRangePct) ?? 0, buffTowers: num(c.affectedTowers) ?? 4,
+      hpPct: num(c.hpReductionPct) ?? 0, buffDmgPct: num(c.buffDamagePct) ?? 0, buffRangePct: num(c.buffRangePct) ?? 0, buffTowers: num(c.affectedTowers) ?? 4,
       dpsAvg: pmin !== null && pmax !== null ? avg(pmin, pmax) : 0, duration: dur ?? 0, slowPct: num(c.slowPct) ?? 0,
       summon: kind === 'summon' ? { units: num(c.units)!, dmgAvg: avg(num(c.unitDamageMin)!, num(c.unitDamageMax) ?? num(c.unitDamageMin)!), interval: num(c.unitAttackIntervalSec)!, duration: dur! } : null,
       perks: perksOf(card), issues: kind === 'summon' ? [] : issues, selectable: issues.length === 0,

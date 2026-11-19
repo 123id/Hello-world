@@ -2,7 +2,7 @@
 // plus what the game doesn't have: the DPS of the card with every part and its arithmetic.
 import { useState, type ReactNode } from 'react'
 import { TIERS, heroById, spellById, towerById, type PerkDef, type SkillDef, type Tier } from '../sim/library'
-import type { CardDps, SkillResult } from '../sim/dps'
+import type { CardDps, PerkGain, SkillResult } from '../sim/dps'
 import { applyPerk, emptyMods } from '../sim/perks'
 import { TILE } from '../data/kingdomwars'
 import type { CardKind } from '../data/icons'
@@ -15,6 +15,7 @@ interface Props {
   kind: CardKind; id: string
   inDeck: boolean; deckTier: Tier; off: string[]
   compute: InfoCompute
+  gains: PerkGain[] // this card's perks and what they add to the deck (empty when the card is not in the deck)
   onTier: (t: Tier) => void; onToggleSkill: (skillId: string) => void
   onUse: () => void; onUnequip: () => void; onClose: () => void
 }
@@ -25,16 +26,18 @@ function Tile({ label, value, tone, wide }: { label: string; value: ReactNode; t
   return <div className={'itile' + (tone ? ' ' + tone : '') + (wide ? ' wide' : '')}><span>{label}</span><b>{value}</b></div>
 }
 
-function PerkList({ perks }: { perks: PerkDef[] }) {
+function PerkList({ perks, gains }: { perks: PerkDef[]; gains: PerkGain[] }) {
   if (!perks.length) return <div className="ihint">No perks.</div>
   return (
     <>
       {perks.map((p, i) => {
         const m = emptyMods(); applyPerk(m, p)
         const modeled = m.ignored.length === 0
+        const g = gains.find((x) => x.perk.name === p.name)
+        const gainText = g && g.counted ? (g.dps > 0.5 ? `adds +${fmt(g.dps)} DPS to your deck` : g.killSecs > 0.005 ? `shortens the ideal kill by ${g.killSecs.toFixed(2)} s` : 'no DPS change') : null
         return (
           <div key={i} className="iperk">
-            <div><b>{p.name}</b><span className={'itag ' + (modeled ? 'ok' : 'no')}>{modeled ? 'counted' : 'not counted'}</span></div>
+            <div><b>{p.name}</b><span className={'itag ' + (modeled ? 'ok' : 'no')}>{modeled ? (gainText ?? 'counted when in the deck') : 'not counted'}</span></div>
             <small>{p.pct !== null && p.stat ? `${p.pct > 0 ? '+' : ''}${p.pct}% ${p.stat} (${p.target})` : 'no value in the library'}{p.inferred ? ' *' : ''}{!modeled ? ` — ${p.target === 'enemies' ? 'works on enemies, which a DPS number does not include' : m.ignored[0]?.why}` : ''}</small>
           </div>
         )
@@ -45,7 +48,7 @@ function PerkList({ perks }: { perks: PerkDef[] }) {
 
 const initials = (n: string) => n.split(/[\s']+/).filter(Boolean).slice(0, 2).map((w) => w[0].toUpperCase()).join('')
 
-export function InfoPage({ kind, id, inDeck, deckTier, off, compute, onTier, onToggleSkill, onUse, onUnequip, onClose }: Props) {
+export function InfoPage({ kind, id, inDeck, deckTier, off, compute, gains, onTier, onToggleSkill, onUse, onUnequip, onClose }: Props) {
   const hero = kind === 'heroes' ? heroById(id) : undefined
   const spell = kind === 'spells' ? spellById(id) : undefined
   const tower = kind === 'towers' ? towerById(id) : undefined
@@ -138,7 +141,7 @@ export function InfoPage({ kind, id, inDeck, deckTier, off, compute, onTier, onT
           </>}
         </div>}
         <div className="isub">Perks</div>
-        <PerkList perks={card.perks} />
+        <PerkList perks={card.perks} gains={gains} />
         {card.perks.some((p) => p.inferred) && <div className="ihint">* value filled in from another card with the same perk name</div>}
       </>
     )
