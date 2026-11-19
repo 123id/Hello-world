@@ -271,7 +271,7 @@ export function DeckBuilder(p: Props) {
             ))}
           </details>
         )}
-        <div className="hint">* value filled in from another card with the same perk name. Tower-damage perks add to each tower's basic attack. Whether they also boost tower skills is not known yet, so skills are not boosted.</div>
+        <div className="hint">* value filled in from another card with the same perk name. Tower-damage perks add to each tower's basic attack and its skills; hero-damage perks add to the hero's basic attack only.</div>
       </section>
 
       {(['heroes', 'towers', 'spells'] as Kind[]).map((kind) => (

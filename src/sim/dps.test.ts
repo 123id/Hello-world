@@ -178,15 +178,28 @@ describe('perks', () => {
     expect(withCoven.towers[1]!.parts[0].dps / without.towers[1]!.parts[0].dps).toBeCloseTo(1.04, 6)
     expect(deckDps({ ...base(), towers: [T('royal-archers'), T('genies-domains'), T('witches-coven'), null], perks: false }, 1).towers[0]!.parts[0].dps).toBeCloseTo(without.towers[0]!.parts[0].dps, 6)
   })
+  it("tower-damage perks also boost tower skills: Spire Force lifts Genie's Wish of Embers by 4%", () => {
+    const d = { ...base(), towers: [T('genies-domains'), null, null, null] }
+    const without = deckDps(d, 1), withBonehart = deckDps({ ...d, hero: heroById('bonehart')! }, 1) // Bonehart carries Spire Force (+4% damage, all towers)
+    const wish = (r: typeof without) => r.towers[0]!.parts.find((p) => p.label === 'Wish of Embers')!.dps
+    expect(wish(withBonehart) / wish(without)).toBeCloseTo(1.04, 6)
+    expect(withBonehart.towers[0]!.parts[0].dps / without.towers[0]!.parts[0].dps).toBeCloseTo(1.04, 6)
+  })
+  it('hero-damage perks do not boost hero skills (owner): Heroic Might lifts the basic attack only', () => {
+    const h = heroById('alric')!, plain = heroDps(h, m), mods = emptyMods(); mods.heroDamage.all = 10
+    const boosted = heroDps(h, mods)
+    expect(boosted.parts[0].dps / plain.parts[0].dps).toBeCloseTo(1.1, 6)
+    expect(boosted.parts.find((p) => p.label === 'Spiked Flurry')!.dps).toBeCloseTo(plain.parts.find((p) => p.label === 'Spiked Flurry')!.dps, 6)
+  })
   it('perkGains measures what each perk adds by leaving it out', () => {
-    const d = { ...base(), towers: [T('royal-archers'), T('genies-domains'), T('witches-coven'), null] }
+    // Bonehart's Spire Force: +4% on every tower's basic attack AND skills (his own numbers do not change)
+    const d = { ...base(), hero: heroById('bonehart')!, towers: [T('royal-archers'), T('genies-domains'), null, null] }
     const g = perkGains(d, 1).find((x) => x.perk.name === 'Spire Force')!
-    expect(g.counted).toBe(true); expect(g.cardName).toBe('Witches Coven')
-    const total = deckDps(d, 1).total, without = deckDps({ ...d, excludePerk: { cardId: 'witches-coven', name: 'Spire Force' } }, 1).total
-    expect(g.dps).toBeCloseTo(total - without, 6); expect(g.dps).toBeGreaterThan(0)
-    // 4% of every tower's basic attack, Coven included
-    const attacks = deckDps(d, 1).towers.reduce((a, t) => a + (t?.parts[0].dps ?? 0), 0)
-    expect(g.dps).toBeCloseTo(attacks * (0.04 / 1.04), 4)
+    expect(g.counted).toBe(true); expect(g.cardName).toBe('Bonehart')
+    const r = deckDps(d, 1), without = deckDps({ ...d, excludePerk: { cardId: 'bonehart', name: 'Spire Force' } }, 1)
+    expect(g.dps).toBeCloseTo(r.total - without.total, 6); expect(g.dps).toBeGreaterThan(0)
+    const towers = r.towers.reduce((a, t) => a + (t?.dps ?? 0), 0)
+    expect(g.dps).toBeCloseTo(towers * (0.04 / 1.04), 4)
   })
   it('perks with no DPS effect are listed with the reason, not hidden', () => {
     const d = { ...base(), towers: [T('royal-archers'), T('tesla-x104'), null, null] }
