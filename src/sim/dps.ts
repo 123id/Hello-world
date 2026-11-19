@@ -37,11 +37,12 @@ export function skillDps(s: SkillDef, c: SkillCtx): SkillResult {
 
   if (k.type === 'cast') {
     const cd = cooldown(k.cooldown), dmg = k.dmgAvg * (1 + dmgPct / 100)
-    const hits = c.perHit ? k.strikes : 1
+    const hits = (c.perHit ? k.strikes : 1) * k.targets
     const perCast = dmg * hits * k.chance
     const how = hits > 1 ? `${hits} hits × ${n0(dmg)} = ${n0(dmg * hits)} per cast` : `${n0(dmg)} per cast`
     const chance = k.chance < 1 ? ` × ${Math.round(k.chance * 100)}% chance` : ''
-    return { part: { label: s.name, skillId: s.id, dps: perCast / cd, detail: `${how}${chance} ÷ ${n1(cd)} s cooldown` } }
+    const units = k.targets > 1 ? ` (${k.targets} affected units, all on the boss)` : ''
+    return { part: { label: s.name, skillId: s.id, dps: perCast / cd, detail: `${how}${chance} ÷ ${n1(cd)} s cooldown${units}` } }
   }
   if (k.type === 'dot') {
     const dps = pick(k.dps, c.tier) * (1 + dmgPct / 100), dur = pick(k.duration, c.tier)

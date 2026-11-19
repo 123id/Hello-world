@@ -129,24 +129,23 @@ export function App() {
     ? { dps: ideal.total, perMin: ideal.perMin, gold: ideal.gold, unknown: ideal.unknownCosts, killText: ideal.idealKill !== null ? `${ideal.idealKill.toFixed(1)} s` : '—', killLabel: 'IDEAL KILL' }
     : { dps: fightDps, perMin: fightDps * 60, gold: fightGold.gold, unknown: fightGold.unknown, killText: kill !== null ? `${kill.toFixed(1)} s` : '—', killLabel: kill !== null ? 'BOSS KILL' : 'NOT KILLED' }
 
+  const BASE = import.meta.env.BASE_URL
   return (
     <div className="app">
-      <header className="stats">
-        <div><b>{fmt(head.dps)}</b><span>DPS{step === 'deck' && delta !== null && <i className={'delta ' + (delta > 0 ? 'up' : 'down')}>{delta > 0 ? '▲' : '▼'} {fmt(Math.abs(delta))}</i>}</span></div>
-        <div><b>{fmt(head.perMin)}</b><span>DAMAGE / MIN</span></div>
-        <div><b><Gold n={head.gold} plus={head.unknown > 0} size={20} /></b><span>GOLD</span></div>
-        <div><b>{head.killText}</b><span>{head.killLabel}</span></div>
-      </header>
+      <div className="topbar">
+        <div id="tophead" className="tophead">
+          <header className="stats">
+            <div><b>{fmt(head.dps)}</b><span>DPS{step === 'deck' && delta !== null && <i className={'delta ' + (delta > 0 ? 'up' : 'down')}>{delta > 0 ? '▲' : '▼'} {fmt(Math.abs(delta))}</i>}</span></div>
+            <div><b>{fmt(head.perMin)}</b><span>DAMAGE / MIN</span></div>
+            <div><b><Gold n={head.gold} plus={head.unknown > 0} size={20} /></b><span>GOLD</span></div>
+            <div><b>{head.killText}</b><span>{head.killLabel}</span></div>
+          </header>
+          {step === 'deck' && <div id="tabrow-slot" />}
+        </div>
+        {step === 'deck' && <div id="minideck-slot" />}
+      </div>
 
       <main className="content">
-        <h1>Kingdom Wars Boss DPS</h1>
-        <div className="sub">Deck calculator for Kingdom Rush Battles, card level 9. Boss only; opponent-only skills are excluded.</div>
-
-        <div className="steps">
-          <button className={step === 'deck' ? 'on' : ''} onClick={() => setStep('deck')}>1 DECK</button>
-          <button className={step === 'battle' ? 'on' : ''} onClick={goBattle}>2 BATTLE</button>
-        </div>
-
         {step === 'deck' ? (
           <DeckBuilder
             deck={deck} dps={ideal} slot={slot} onSlot={setSlot}
@@ -183,6 +182,15 @@ export function App() {
           </>
         )}
       </main>
+
+      <nav className="bottomnav">
+        <button className={step === 'deck' ? 'on' : ''} onClick={() => setStep('deck')}>
+          <img src={`${BASE}ui/nav-collection.png`} alt="" draggable={false} /><span>Collection</span>
+        </button>
+        <button className={step === 'battle' ? 'on' : ''} onClick={goBattle}>
+          <img src={`${BASE}ui/nav-battle.png`} alt="" draggable={false} /><span>Battle</span>
+        </button>
+      </nav>
     </div>
   )
 }
