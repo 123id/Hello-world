@@ -260,6 +260,14 @@ describe('whole deck', () => {
 })
 
 describe('icons', () => {
+  it('every icon is level 9, rendered at one of two uniform sizes (rounded square for heroes and towers, hexagon for spells)', async () => {
+    const man = (await import('../../public/icons/manifest.json')).default as Record<string, { w: number; h: number; shape: string; level?: number }>
+    for (const [k, v] of Object.entries(man)) {
+      expect(v.level, k).toBe(9)
+      expect(v.shape, k).toBe(k.startsWith('spells:') ? 'hex' : 'rect')
+      expect([v.w, v.h], k).toEqual(k.startsWith('spells:') ? [160, 184] : [160, 190])
+    }
+  })
   it('every card has a picture, and the spell list matches the game (17 spells)', () => {
     expect(LIBRARY.spells).toHaveLength(17)
     const missing = [
