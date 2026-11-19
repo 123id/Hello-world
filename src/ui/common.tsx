@@ -25,7 +25,7 @@ export function Card({ kind, id, pill, tone, cls, onClick, sel, drag, drop, drag
     <button className={'card' + (sel ? ' sel' : '') + (dragging ? ' dragging' : '') + (over ? ' over' : '') + (dim ? ' dim' : '') + (glow ? ' glow' : '') + (drag ? ' draggable' : '')} data-drop={drop} title={c?.name} {...handlers}>
       <span className="cardimg"><Icon kind={kind} id={id} size={84} />{badge && <span className={'badge ' + (badge.tone ?? '')} title={badge.title}>{badge.text}</span>}{tag && <span className="tag-level">{tag}</span>}</span>
       {!hideName && <span className="cardname">{c?.name ?? id}</span>}
-      {pill !== undefined && <span className={'pill ' + (tone ?? '')}>{cls && <ClassIcon cls={cls} size={13} />}{pill}</span>}
+      {pill !== undefined && pill !== '' && <span className={'pill ' + (tone ?? '')}>{cls && <ClassIcon cls={cls} size={13} />}{pill}</span>}
     </button>
   )
 }

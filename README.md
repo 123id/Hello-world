@@ -21,7 +21,7 @@ There is no map, boss position or creeps in this step. The header shows DPS (wit
 **2 Battle — the simulation.** Tap a stump on the real map to build, place the hero and barracks rally points, and see the boss fight
 (boss position, blocking, creeps) with kill time and DPS. Hold and drag towers between stumps; drag the hero and rally dots.
 
-Icons: the gold coin, the tab icons and the bottom-bar icons are cropped from the game's screens; the sword (melee), arrow (ranged), blast (magic) and dynamite (artillery) icons are drawn as SVG in `src/ui/icons.tsx`.
+Icons: card pictures were cropped from the game's screens and screen recordings (the large popup picture is the cleanest source); a card with no stats in the library still shows its picture but no DPS or stat boxes. The gold coin, the tab icons and the bottom-bar icons are cropped from the game's screens; the sword (melee), arrow (ranged), blast (magic) and dynamite (artillery) icons are drawn as SVG in `src/ui/icons.tsx`.
 
 ## Run / deploy
 - `npm install && npm run dev` — local dev server
