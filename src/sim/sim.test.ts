@@ -36,8 +36,8 @@ describe('library adapter', () => {
   it('files Wrath of Blackburn as a spell and fills Gerald\'s respawn from the game', () => {
     expect(heroById('wrath-of-blackburn')).toBeUndefined()
     const w = spellById('wrath-of-blackburn')!
-    expect(w.selectable).toBe(false) // summon spell: not simulated yet
-    expect(w.issues.join()).toMatch(/summon/)
+    expect(w.kind).toBe('summon') // a summon spell, with its numbers read from its one skill
+    expect(w.summon).toEqual({ units: 1, dmgAvg: 1261.5, interval: 1.9, duration: 13 })
     const g = heroById('gerald-lightseeker')!
     expect(g.respawn).toBe(15)
     expect(g.respawnAssumed).toBe(false)

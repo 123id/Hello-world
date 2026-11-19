@@ -1,7 +1,7 @@
 // Card info page (like the game's): the DPS maths, the stats, the skills and perks. No map, no boss position.
 import type { ReactNode } from 'react'
 import { TIERS, heroById, spellById, towerById, type PerkDef, type SkillDef, type Tier } from '../sim/library'
-import type { CardDps } from '../sim/dps'
+import type { CardDps, SkillResult } from '../sim/dps'
 import { applyPerk, emptyMods } from '../sim/perks'
 import { TILE } from '../data/kingdomwars'
 import type { CardKind } from '../data/icons'
@@ -12,8 +12,12 @@ import { classOfHero, classOfTower, fmt } from './state'
 interface Props {
   kind: CardKind; id: string
   info: CardDps
-  tier: Tier; bought: string[]
+  tier: Tier // this tower's level
+  levels: { tier: Tier; dps: number | null }[] // towers: DPS at each level
+  off: string[] // skills switched off
+  skillOf: (s: SkillDef) => SkillResult // a skill's numbers in the current deck context, whether or not it is switched on
   inDeck: boolean
+  onTier: (t: Tier) => void
   onToggleSkill: (skillId: string) => void
   onUse: () => void; onUnequip: () => void; onClose: () => void
 }
@@ -40,29 +44,27 @@ function PerkList({ perks }: { perks: PerkDef[] }) {
   )
 }
 
-function SkillCard({ s, info, toggle }: { s: SkillDef; info: CardDps; toggle?: { on: boolean; disabled: boolean; onChange: () => void } }) {
-  const part = info.parts.find((p) => p.label === s.name)
+function SkillCard({ s, res, counted, toggle }: { s: SkillDef; res: SkillResult; counted: boolean; toggle?: { disabled: boolean; onChange: () => void } }) {
+  const opponent = !!s.calcWhy?.startsWith('scope')
   const bits: ReactNode[] = []
-  if (s.cooldown) bits.push(`${s.cooldown}s cooldown`)
-  if (s.dmgAvg) bits.push(`~${fmt(s.dmgAvg)} damage`)
-  if (s.dps) bits.push(`${fmt(s.dps)} dps${s.duration ? ` for ${s.duration}s` : ''}`)
   if (s.cost != null) bits.push(<Gold key="g" n={s.cost} size={14} />)
-  const opponent = !s.supported && s.why?.startsWith('scope')
   return (
-    <div className={'skill' + (part ? '' : ' off')}>
+    <div className={'skill' + (counted ? '' : ' off')}>
       <div className="skillhead">
-        {toggle && <input type="checkbox" checked={toggle.on} disabled={toggle.disabled} onChange={toggle.onChange} aria-label={`Buy ${s.name}`} />}
+        {toggle && <input type="checkbox" checked={counted} disabled={toggle.disabled} onChange={toggle.onChange} aria-label={`Count ${s.name}`} />}
         <b>{s.name}</b>
-        {part ? <span className="tag ok">+{fmt(part.dps)} DPS</span> : <span className="tag no">{opponent ? 'not for the boss' : 'no DPS'}</span>}
+        {res.part
+          ? <span className={'tag ' + (counted ? 'ok' : '')}>{counted ? '+' : 'off · +'}{fmt(res.part.dps)} DPS</span>
+          : <span className="tag no">{opponent ? 'not for the boss' : 'no DPS'}</span>}
+        {bits.length > 0 && <span className="skillbits">{bits}</span>}
       </div>
-      {bits.length > 0 && <div className="skillbits">{bits.map((b, i) => <span key={i}>{b}</span>)}</div>}
-      {part && <div className="hint">{part.detail}</div>}
-      {!part && !opponent && <div className="hint">{s.why ?? 'no numbers in the library'}</div>}
+      {res.part && <div className="hint">{res.part.detail}</div>}
+      {!res.part && !opponent && <div className="hint">Not counted: {res.why}</div>}
     </div>
   )
 }
 
-export function Inspect({ kind, id, info, tier, bought, inDeck, onToggleSkill, onUse, onUnequip, onClose }: Props) {
+export function Inspect({ kind, id, info, tier, levels, off, skillOf, inDeck, onTier, onToggleSkill, onUse, onUnequip, onClose }: Props) {
   const hero = kind === 'heroes' ? heroById(id) : undefined
   const spell = kind === 'spells' ? spellById(id) : undefined
   const tower = kind === 'towers' ? towerById(id) : undefined
@@ -70,17 +72,32 @@ export function Inspect({ kind, id, info, tier, bought, inDeck, onToggleSkill, o
   if (!card) return null
   const cls = hero ? classOfHero(hero) : tower ? classOfTower(tower) : spell && spell.kind !== 'buff' ? ('magic' as const) : null
   const skillsOpen = tier === 3
+  const countable = (s: SkillDef) => !!s.calc && (s.calc.type !== 'summon' || s.calc.duration !== null)
 
   return (
     <Sheet title={<span className="inspecttitle"><Icon kind={kind} id={id} size={44} />{card.name}</span>} onClose={onClose}>
       <div className="row" style={{ alignItems: 'center', marginBottom: 8 }}>
         {cls && <span className="chip"><ClassIcon cls={cls} size={15} />{CLASS_LABEL[cls]}</span>}
         {card.rarity && <span className="chip">{card.rarity}</span>}
-        <span className="chip">{tower ? `Tower level ${tier}` : 'Card level 9'}</span>
+        {!tower && <span className="chip">Card level 9</span>}
       </div>
+
+      {tower && (
+        <>
+          <div className="hint" style={{ marginTop: 0 }}>Tower level{inDeck ? '' : ' (add the tower to your deck to change its level)'}</div>
+          <div className="levelpick">
+            {levels.map((l) => (
+              <button key={l.tier} className={tier === l.tier ? 'on' : ''} disabled={!inDeck} onClick={() => onTier(l.tier)}>
+                <b>LVL{l.tier}</b><span>{l.dps === null ? 'no data' : `${fmt(l.dps)} DPS`}</span>
+              </button>
+            ))}
+          </div>
+        </>
+      )}
 
       <div className="dpsbox">
         <div className="dpsbig">{info.dps === null ? 'No DPS' : `${fmt(info.dps)} DPS`}</div>
+        <div className="hint" style={{ marginTop: 0 }}>{info.parts.length > 1 ? 'All of this added together:' : ''}</div>
         {info.parts.map((p) => (
           <div key={p.label} className="dpspart"><span><b>{p.label}</b><br /><small>{p.detail}</small></span><b>{fmt(p.dps)}</b></div>
         ))}
@@ -97,7 +114,7 @@ export function Inspect({ kind, id, info, tier, bought, inDeck, onToggleSkill, o
           <Row k="Attack interval" v={`${hero.interval} s`} />
           <Row k="Respawn" v={`${hero.respawn} s${hero.respawnAssumed ? ' (assumed)' : ''}`} />
           <h3>Skills</h3>
-          {hero.skills.map((s) => <SkillCard key={s.id} s={s} info={info} />)}
+          {hero.skills.map((s) => <SkillCard key={s.id} s={s} res={skillOf(s)} counted={!!skillOf(s).part} />)}
         </>
       )}
 
@@ -115,11 +132,11 @@ export function Inspect({ kind, id, info, tier, bought, inDeck, onToggleSkill, o
             </tbody>
           </table>
           <h3>Skills</h3>
-          <div className="hint">{skillsOpen ? (inDeck ? 'Tick the skills you bought; they add their DPS.' : 'Add this tower to your deck to buy skills.') : 'Skills unlock at tower level 3.'}</div>
-          {tower.skills.map((s) => (
-            <SkillCard key={s.id} s={s} info={info}
-              toggle={s.supported ? { on: bought.includes(s.id), disabled: !skillsOpen || !inDeck, onChange: () => onToggleSkill(s.id) } : undefined} />
-          ))}
+          <div className="hint">{skillsOpen ? 'Every skill with numbers counts by default. Untick one to leave it out of the DPS and its gold.' : 'Skills unlock at tower level 3.'}</div>
+          {tower.skills.map((s) => {
+            const res = skillOf(s), counted = !!res.part && skillsOpen && !off.includes(s.id)
+            return <SkillCard key={s.id} s={s} res={res} counted={counted} toggle={countable(s) ? { disabled: !skillsOpen || !inDeck, onChange: () => onToggleSkill(s.id) } : undefined} />
+          })}
         </>
       )}
 
@@ -128,9 +145,10 @@ export function Inspect({ kind, id, info, tier, bought, inDeck, onToggleSkill, o
           <h3>Stats</h3>
           {spell.cooldown > 0 && <Row k="Cooldown" v={`${spell.cooldown} s`} />}
           {spell.aoe > 0 && <Row k="Area" v={`${spell.aoe} units (${(spell.aoe / TILE).toFixed(1)} tiles)`} />}
-          {spell.kind === 'strike' && <Row k="Damage per hit" v={`${range(spell.dmgMin, spell.dmgMax)} × ${spell.hits}`} />}
+          {spell.kind === 'strike' && <Row k="Damage per hit" v={`${range(spell.dmgMin, spell.dmgMax)} × ${spell.hits} hits`} />}
           {spell.kind === 'zone' && <Row k="Damage over time" v={`${fmt(spell.dpsAvg)} DPS for ${spell.duration} s`} />}
           {spell.kind === 'buff' && <Row k="Buff" v={`+${spell.buffDmgPct}% damage, +${spell.buffRangePct}% range, ${spell.duration} s, up to ${spell.buffTowers} towers`} />}
+          {spell.kind === 'summon' && spell.summon && <Row k="Summon" v={`${spell.summon.units} × ${range(spell.summon.dmgAvg, spell.summon.dmgAvg)} per hit, ${spell.summon.interval} s, ${spell.summon.duration} s`} />}
         </>
       )}
 
