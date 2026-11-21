@@ -51,6 +51,24 @@ export function applyVideoFacts(r: Raw): Raw {
   const soul = skill(wrath, 'corrupted-soul')
   if (soul) { soul.unitDamageMin = 2019; soul.unitDamageMax = 2355 }
 
+  // ---- Assassin's Guild (screenshots, card level 9, so every number applies as is). The page shows "1749 +189": the green part is a bonus
+  // from outside the card (other cards' perks), so only the base number is used, as everywhere else in the library. ----
+  const assassins = byId(towers, 'assassins')
+  if (assassins) {
+    const v: Record<number, { hp: number; min: number; max: number }> = {
+      1: { hp: 1749, min: 505, max: 673 }, 2: { hp: 2167, min: 909, max: 1077 }, 3: { hp: 2648, min: 1279, max: 1346 },
+    }
+    for (const t of assassins.tiers as Raw[]) {
+      const x = v[t.tier]; if (!x) continue
+      t.unitHealth = x.hp; t.unitArmorPct = 0; t.damageMin = x.min; t.damageMax = x.max; t.attackIntervalSec = 0.6; t.units = 2
+    }
+    assassins.rarity = 'Epic'
+    assassins.completeness = 'full-L9 in-game (Sneak Attack page not captured)'
+    const dodge = skill(assassins, 'dodge'); if (dodge) dodge.dodgePctByLevel = [30, 45, 60]
+    const pick = skill(assassins, 'pickpocket'); if (pick) { pick.chancePct = 30; pick.extraGold = 10; pick.purchaseCost = 120 }
+    assassins.perks = [{ name: 'Invader Fragility', stat: 'health', target: 'enemies', pct: -2 }]
+  }
+
   // ---- Polymorph (video 2): it lasts 6 s over an area of 80 ----
   const poly = byId(spells, 'polymorph')
   if (poly) { poly.durationSec = 6; poly.aoe = 80 }
