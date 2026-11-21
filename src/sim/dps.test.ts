@@ -131,6 +131,15 @@ describe('heroes and spells', () => {
   it('Wrath of Blackburn (a summon spell): 1 unit of 2,019–2,355 every 1.9 s, alive 13 of every 21 s', () => {
     expect(spellDps(spellById('wrath-of-blackburn')!, m).dps).toBeCloseTo((2187 / 1.9) * (13 / 21), 6)
   })
+  it("Assassin's Guild is complete at every level (read at card level 9): 2 assassins, attack every 0.6 s", () => {
+    const a = T('assassins')
+    expect(a.selectable, a.issues.join('; ')).toBe(true); expect(a.dataLevel).toBe(9)
+    expect(a.tiers[1]).toMatchObject({ dmgMin: 505, dmgMax: 673, interval: 0.6, units: 2, unitHp: 1749, cost: 75 })
+    expect(a.tiers[3]).toMatchObject({ dmgMin: 1279, dmgMax: 1346, unitHp: 2648 })
+    expect(towerDps(a, 3, [], m).parts[0].dps).toBeCloseTo((2 * 1312.5) / 0.6, 6)   // 4,375 DPS from the two assassins
+    expect(towerDps(a, 1, [], m).parts[0].dps).toBeCloseTo((2 * 589) / 0.6, 6)
+    expect(a.rarity).toBe('Epic'); expect(a.perks[0]).toMatchObject({ name: 'Invader Fragility', pct: -2 })
+  })
   it('Polymorph does not work on the boss, so it adds no damage and says why', () => {
     const p = spellById('polymorph')!
     expect(p.issues).toEqual(['does not work on the boss'])
