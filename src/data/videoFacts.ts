@@ -51,8 +51,8 @@ export function applyVideoFacts(r: Raw): Raw {
   const soul = skill(wrath, 'corrupted-soul')
   if (soul) { soul.unitDamageMin = 2019; soul.unitDamageMax = 2355 }
 
-  // ---- Assassin's Guild (screenshots, card level 9, so every number applies as is). The page shows "1749 +189": the green part is a bonus
-  // from outside the card (other cards' perks), so only the base number is used, as everywhere else in the library. ----
+  // ---- Assassin's Guild (screenshots, card level 9, so every number applies as is). The page shows "1749 +189": the green part is the bonus
+  // is what the next card level (10) would add, so it is never used: only the base number counts, as everywhere else in the library. ----
   const assassins = byId(towers, 'assassins')
   if (assassins) {
     const v: Record<number, { hp: number; min: number; max: number }> = {
