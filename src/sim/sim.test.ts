@@ -61,12 +61,13 @@ describe('simulate', () => {
   const archers = towerById('royal-archers')!
   const t3 = archers.tiers[3]!
 
-  it('undefended boss crosses the line ~35 s after it enters', () => {
+  it('undefended boss crosses the line when its route has been walked at 1 tile/s', () => {
     const r = simulate({ ...base({ map: MAP_KW, boss: BOSS_KW, bossEnters: BOSS_ENTERS_SEC }) })
+    const tiles = MAP_KW.routes.find((q) => q.id === MAP_KW.bossRouteId)!.points.reduce((a, p, i, l) => (i ? a + Math.hypot(p.x - l[i - 1].x, p.y - l[i - 1].y) : 0), 0) / TILE
     expect(r.killTime).toBeNull()
-    expect(r.crossedAt).toBeGreaterThan(BOSS_ENTERS_SEC + 34)
-    expect(r.crossedAt).toBeLessThan(BOSS_ENTERS_SEC + 36)
-    expect(35 * TILE).toBe(2800)
+    expect(r.crossedAt).toBeGreaterThan(BOSS_ENTERS_SEC + tiles - 1)
+    expect(r.crossedAt).toBeLessThan(BOSS_ENTERS_SEC + tiles + 1)
+    expect(tiles).toBeGreaterThan(30); expect(tiles).toBeLessThan(34)
   })
 
   it('a lone tower deals dmg/interval to a stationary boss', () => {

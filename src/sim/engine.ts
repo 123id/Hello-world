@@ -20,7 +20,6 @@ export const RALLY_RANGE = 160 // how far from its tower a barracks rally point 
 export const UNIT_RESPAWN = 10 // barracks unit respawn (ASSUMED; not in library)
 export const HERO_REACH = 200 // hero skills fire when the boss is this close (ASSUMED)
 export const HERO_RANGED_RANGE = 140 // ranged hero attack range (ASSUMED)
-const GROUND_ROUTES = ['r1', 'r2', 'r3']
 
 export interface Placement { spotId: string; tower: TowerDef; tier: Tier; skills: string[]; rally?: Pt }
 export interface Build { hero: HeroDef | null; heroPos: Pt; spells: SpellDef[]; placements: Placement[] }
@@ -213,7 +212,7 @@ export function simulate(inp: SimInput): SimResult {
       const c = spawns[spawnIdx++].c
       let route: Route
       if (c.route === 'fly') route = routes.fly
-      else { route = routes[GROUND_ROUTES[rr % GROUND_ROUTES.length]]; rr++ }
+      else { const ground = map.routes.filter((r) => r.id !== 'fly'); route = routes[ground[rr % ground.length].id]; rr++ }
       if (!route) continue
       enemies.push(mkEnemy(c.name, route, c.hp, c.speed, c.flying, c.damage, c.interval, false))
       creepsSpawned++
