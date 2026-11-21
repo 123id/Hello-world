@@ -34,7 +34,7 @@ Icons: every card picture is level 9 with one uniform size per shape (rounded sq
 ## Data
 - Card level: every card is level 9 in Kingdom Wars (confirmed by the owner), so the calculator always wants level-9 numbers; numbers read at another card level are flagged with a ! badge.
 - Cards: `data/raw/cards-full.json` (kept out of git) is scrubbed into `src/data/library.json` by `npm run library` /
-  `node scripts/build-library.mjs`. The library is authoritative (including boss HP 255,449).
+  `node scripts/build-library.mjs`. The boss (Krum'Thak, level 5: 230,133 health, 5,451–9,947 damage) is in `src/data/kingdomwars.ts`.
 - Map + creep tables: `src/data/kingdomwars.ts` (transcribed from krb-deck screenshots; route lengths checked against its tile counts).
 - Map picture: `public/map.webp` is the supplied map screenshot with the route lines, arrows and monster sprites painted out (OpenCV inpainting); tower spots and routes are drawn on top.
 - Icons: cropped from in-game screenshots into `public/icons/` (+ `manifest.json`). Kingdom Rush Battles artwork belongs to Ironhide Game Studio; it is used here for an unofficial fan tool.
